@@ -1,18 +1,18 @@
-use alloy_consensus::Transaction as TransactionTrait;
+use alloy_consensus::{Transaction as TransactionTrait, transaction::Recovered};
 use alloy_eips::{Typed2718, eip2930::AccessList, eip7702::SignedAuthorization};
 use alloy_network_primitives::TransactionResponse;
-use alloy_primitives::{Address, BlockHash, Bytes, ChainId, TxKind, B256, U256};
+use alloy_primitives::{Address, B256, BlockHash, Bytes, ChainId, TxKind, U256};
 use serde::{Deserialize, Serialize};
 
 use arb_alloy_consensus::ArbTxEnvelope;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(
+    try_from = "tx_serde::TransactionSerdeHelper",
+    into = "tx_serde::TransactionSerdeHelper"
+)]
 pub struct ArbTransaction {
-    #[serde(flatten)]
     pub inner: alloy_rpc_types_eth::Transaction<ArbTxEnvelope>,
-
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub request_id: Option<B256>,
 }
 
@@ -117,5 +117,126 @@ impl TransactionResponse for ArbTransaction {
 impl Typed2718 for ArbTransaction {
     fn ty(&self) -> u8 {
         self.inner.ty()
+    }
+}
+
+mod tx_serde {
+    use super::*;
+    use serde::de::Error;
+
+    #[derive(Serialize, Deserialize)]
+    struct OptionalFields {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        from: Option<Address>,
+        #[serde(
+            default,
+            rename = "gasPrice",
+            skip_serializing_if = "Option::is_none",
+            with = "alloy_serde::quantity::opt"
+        )]
+        effective_gas_price: Option<u128>,
+        #[serde(
+            default,
+            rename = "arbRequestId",
+            skip_serializing_if = "Option::is_none"
+        )]
+        request_id: Option<B256>,
+    }
+
+    #[derive(Serialize, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    pub(crate) struct TransactionSerdeHelper {
+        #[serde(flatten)]
+        inner: ArbTxEnvelope,
+        #[serde(default)]
+        block_hash: Option<BlockHash>,
+        #[serde(default, with = "alloy_serde::quantity::opt")]
+        block_number: Option<u64>,
+        #[serde(default, with = "alloy_serde::quantity::opt")]
+        transaction_index: Option<u64>,
+        #[serde(flatten)]
+        other: OptionalFields,
+    }
+
+    fn inner_contains_from(inner: &ArbTxEnvelope) -> bool {
+        matches!(
+            inner,
+            ArbTxEnvelope::DepositTx(_)
+                | ArbTxEnvelope::SubmitRetryableTx(_)
+                | ArbTxEnvelope::Unsigned(_)
+                | ArbTxEnvelope::Contract(_)
+                | ArbTxEnvelope::Retry(_)
+        )
+    }
+
+    impl From<ArbTransaction> for TransactionSerdeHelper {
+        fn from(value: ArbTransaction) -> Self {
+            let ArbTransaction {
+                inner:
+                    alloy_rpc_types_eth::Transaction {
+                        inner,
+                        block_hash,
+                        block_number,
+                        transaction_index,
+                        effective_gas_price,
+                    },
+                request_id,
+            } = value;
+
+            let (inner, from) = inner.into_parts();
+            let from = if inner_contains_from(&inner) {
+                None
+            } else {
+                Some(from)
+            };
+            let effective_gas_price = effective_gas_price.filter(|_| inner.gas_price().is_none());
+
+            Self {
+                inner,
+                block_hash,
+                block_number,
+                transaction_index,
+                other: OptionalFields {
+                    from,
+                    effective_gas_price,
+                    request_id,
+                },
+            }
+        }
+    }
+
+    impl TryFrom<TransactionSerdeHelper> for ArbTransaction {
+        type Error = serde_json::Error;
+
+        fn try_from(value: TransactionSerdeHelper) -> Result<Self, Self::Error> {
+            let TransactionSerdeHelper {
+                inner,
+                block_hash,
+                block_number,
+                transaction_index,
+                other,
+            } = value;
+
+            let from = if let Some(from) = other.from {
+                from
+            } else {
+                inner
+                    .sender()
+                    .map_err(|_| serde_json::Error::custom("missing `from` field"))?
+            };
+
+            let effective_gas_price = other.effective_gas_price.or(inner.gas_price());
+
+            Ok(ArbTransaction {
+                inner: alloy_rpc_types_eth::Transaction {
+                    inner: Recovered::new_unchecked(inner, from),
+                    block_hash,
+                    block_number,
+                    transaction_index,
+                    effective_gas_price,
+                },
+                request_id: other.request_id,
+            })
+        }
     }
 }

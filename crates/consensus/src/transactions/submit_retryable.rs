@@ -8,29 +8,40 @@ use alloy_eips::{
     eip7702::SignedAuthorization,
 };
 use alloy_primitives::{
-    address, Address, B256, Bytes, ChainId, FixedBytes, Sealable, TxHash, TxKind, U256, keccak256,
+    Address, B256, Bytes, ChainId, FixedBytes, Sealable, TxHash, TxKind, U256, address, keccak256,
 };
 use alloy_rlp::{BufMut, Decodable, Encodable, Header};
 use bytes::Buf;
 use serde::{Deserialize, Serialize};
 
-use crate::transactions::{ArbTxType, util::{decode, decode_rest}};
+use crate::transactions::{
+    ArbTxType,
+    util::{decode, decode_rest},
+};
 /// https://github.com/OffchainLabs/nitro/blob/23cae22e1f76cf3675f965d78e268fd2870d8708/arbos/parse_l2.go#L292
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SubmitRetryableTx {
+    #[serde(alias = "chain_id")]
     chain_id: U256,
+    #[serde(alias = "request_id")]
     request_id: B256,
     from: Address,
+    #[serde(alias = "l1Basefee")]
     l1_base_fee: U256, // base fee of the L1 transaction that created this retryable
 
     deposit_value: U256,
+    #[serde(alias = "maxFeePerGas")]
     gas_fee_cap: U256, //maxFeePerGas
+    #[serde(alias = "gas")]
     gas_limit: U256,
     retry_to: TxKind,
     retry_value: U256,    //call value
     beneficiary: Address, //callvalue refund address
     max_submission_fee: U256,
+    #[serde(alias = "refundTo", alias = "feeRefundAddr")]
     fee_refund_address: Address,
+    #[serde(default)]
     retry_data_size: U256,
     retry_data: Bytes,
     #[serde(skip)]
@@ -340,7 +351,9 @@ impl Transaction for SubmitRetryableTx {
     /// Dont use this for retryable transactions, it returns 0.
     #[allow(unused_variables)]
     fn effective_gas_price(&self, base_fee: Option<u64>) -> u128 {
-        base_fee.map(|v| v as u128).unwrap_or_else(|| self.gas_fee_cap.to())
+        base_fee
+            .map(|v| v as u128)
+            .unwrap_or_else(|| self.gas_fee_cap.to())
     }
 
     #[doc = " Returns `true` if the transaction supports dynamic fees."]

@@ -25,8 +25,11 @@ use serde::{Deserialize, Serialize};
 use crate::transactions::ArbTxType;
 
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TxDeposit {
+    #[serde(alias = "chain_id")]
     pub chain_id: U256,
+    #[serde(alias = "request_id")]
     pub request_id: FixedBytes<32>,
     pub from: Address,
     pub to: Address,

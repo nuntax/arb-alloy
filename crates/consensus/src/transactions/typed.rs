@@ -1,8 +1,8 @@
 use alloy_consensus::{TxEip1559, TxEip2930, TxEip7702, TxLegacy};
 
 use crate::transactions::{
-    ArbTxEnvelope, TxContract, TxDeposit, TxRetry, TxUnsigned,
-    internal::ArbitrumInternalTx, submit_retryable::SubmitRetryableTx,
+    ArbTxEnvelope, TxContract, TxDeposit, TxRetry, TxUnsigned, internal::ArbitrumInternalTx,
+    submit_retryable::SubmitRetryableTx,
 };
 
 pub enum ArbitrumTypedTransaction {

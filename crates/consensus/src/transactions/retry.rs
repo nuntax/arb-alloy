@@ -15,11 +15,15 @@ use serde::{Deserialize, Serialize};
 use crate::transactions::ArbTxType;
 
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TxRetry {
+    #[serde(alias = "chain_id")]
     pub chain_id: U256,
     pub nonce: u64,
     pub from: Address,
+    #[serde(alias = "maxFeePerGas")]
     pub gas_fee_cap: U256,
+    #[serde(alias = "gas")]
     pub gas_limit: u64,
     pub to: TxKind,
     pub value: U256,
@@ -76,7 +80,10 @@ impl TxRetry {
     }
 
     pub fn rlp_header(&self) -> Header {
-        Header { list: true, payload_length: self.rlp_encoded_fields_length() }
+        Header {
+            list: true,
+            payload_length: self.rlp_encoded_fields_length(),
+        }
     }
 
     pub fn rlp_encode(&self, out: &mut dyn BufMut) {
@@ -193,7 +200,9 @@ impl Transaction for TxRetry {
     }
 
     fn effective_gas_price(&self, base_fee: Option<u64>) -> u128 {
-        base_fee.map(|v| v as u128).unwrap_or_else(|| self.gas_fee_cap.to())
+        base_fee
+            .map(|v| v as u128)
+            .unwrap_or_else(|| self.gas_fee_cap.to())
     }
 
     fn is_dynamic_fee(&self) -> bool {

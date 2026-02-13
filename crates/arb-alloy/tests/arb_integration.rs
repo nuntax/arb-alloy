@@ -3,10 +3,12 @@ use std::env;
 use alloy_eips::BlockId;
 use alloy_eips::Typed2718;
 use alloy_network_primitives::{BlockResponse, ReceiptResponse, TransactionResponse};
+use alloy_primitives::{B256, b256};
 use alloy_provider::{Provider, ProviderBuilder};
 use alloy_rpc_types_eth::BlockNumberOrTag;
 use reqwest::Url;
 
+use arb_alloy::consensus::{ArbReceiptEnvelope, ArbTxEnvelope};
 use arb_alloy::{network::Arbitrum, provider::ArbProviderExt};
 
 #[test]
@@ -214,6 +216,78 @@ async fn arb_block_and_receipts() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(receipt.transaction_hash(), tx_hash);
         assert_eq!(receipt.block_hash(), Some(block_hash));
     }
+
+    Ok(())
+}
+
+async fn assert_tx_and_receipt_kind(
+    provider: &impl Provider<Arbitrum>,
+    tx_hash: B256,
+    expected_tx: fn(&ArbTxEnvelope) -> bool,
+    expected_receipt: fn(&ArbReceiptEnvelope<alloy_rpc_types_eth::Log>) -> bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let tx = provider
+        .get_transaction_by_hash(tx_hash)
+        .await?
+        .ok_or_else(|| format!("missing transaction for hash {tx_hash}"))?;
+    assert!(
+        expected_tx(tx.as_ref()),
+        "transaction envelope mismatch for {tx_hash}: got type 0x{:02x}",
+        tx.ty()
+    );
+
+    let receipt = provider
+        .get_transaction_receipt(tx_hash)
+        .await?
+        .ok_or_else(|| format!("missing receipt for hash {tx_hash}"))?;
+    assert!(
+        expected_receipt(&receipt.inner.inner),
+        "receipt envelope mismatch for {tx_hash}: got type 0x{:02x}",
+        receipt.inner.inner.ty()
+    );
+    assert_eq!(receipt.transaction_hash(), tx_hash);
+    assert!(
+        receipt.l1_block_number.is_some(),
+        "expected l1BlockNumber on receipt for {tx_hash}"
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn arb_known_tx_receipts_decode_by_type() -> Result<(), Box<dyn std::error::Error>> {
+    let Some(url) = rpc_url()? else {
+        eprintln!("ARB_RPC_URL not set; skipping arb-alloy integration test");
+        return Ok(());
+    };
+
+    let provider = ProviderBuilder::<_, _, Arbitrum>::default().connect_http(url);
+
+    // SubmitRetryable tx: 0x69
+    assert_tx_and_receipt_kind(
+        &provider,
+        b256!("ba468eff535d02c61cc4dba52987287e5412c23fea8dd5ea63ba91f3a18b24b4"),
+        |tx| matches!(tx, ArbTxEnvelope::SubmitRetryableTx(_)),
+        |receipt| matches!(receipt, ArbReceiptEnvelope::SubmitRetryable(_)),
+    )
+    .await?;
+
+    // Deposit tx: 0x64
+    assert_tx_and_receipt_kind(
+        &provider,
+        b256!("982d30564efe4ceec675a09c72637d1f9490558131f31d4c37c9c4c8e08d7724"),
+        |tx| matches!(tx, ArbTxEnvelope::DepositTx(_)),
+        |receipt| matches!(receipt, ArbReceiptEnvelope::Deposit(_)),
+    )
+    .await?;
+
+    // Internal start-block tx: 0x6a
+    assert_tx_and_receipt_kind(
+        &provider,
+        b256!("51f2698bcf39d55c0d2a9c49d9192980c5b2c0cc1a2f935d0a8f79df3885a43b"),
+        |tx| matches!(tx, ArbTxEnvelope::ArbitrumInternal(_)),
+        |receipt| matches!(receipt, ArbReceiptEnvelope::Internal(_)),
+    )
+    .await?;
 
     Ok(())
 }

@@ -17,7 +17,9 @@ impl From<alloy_rpc_types_eth::TransactionRequest> for ArbTransactionRequest {
 
 impl From<ArbTxEnvelope> for ArbTransactionRequest {
     fn from(tx: ArbTxEnvelope) -> Self {
-        Self { inner: alloy_rpc_types_eth::TransactionRequest::from_transaction(tx) }
+        Self {
+            inner: alloy_rpc_types_eth::TransactionRequest::from_transaction(tx),
+        }
     }
 }
 

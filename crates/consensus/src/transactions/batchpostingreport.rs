@@ -92,7 +92,9 @@ pub fn decode_fields_sequencer(
     let legacy_gas = if let Some(ref stats) = batch_data_stats {
         let legacy_gas = get_legacy_costs_from_batch_stats(stats);
         if legacy_batch_gas.is_some() && legacy_batch_gas.unwrap() != legacy_gas {
-            return Err(alloy_rlp::Error::Custom("Legacy gas doesn't fit local compute."));
+            return Err(alloy_rlp::Error::Custom(
+                "Legacy gas doesn't fit local compute.",
+            ));
         }
         legacy_gas
     } else {
@@ -106,7 +108,9 @@ pub fn decode_fields_sequencer(
         construct_batchpostreport_data(
             batch_timestamp,
             batch_poster,
-            batch_num.try_into().map_err(|_| alloy_rlp::Error::Overflow)?,
+            batch_num
+                .try_into()
+                .map_err(|_| alloy_rlp::Error::Overflow)?,
             batchgas,
             l1_base_fee,
         )
@@ -117,7 +121,9 @@ pub fn decode_fields_sequencer(
         construct_batchreportv2_data(
             batch_timestamp,
             batch_poster,
-            batch_num.try_into().map_err(|_| alloy_rlp::Error::Overflow)?,
+            batch_num
+                .try_into()
+                .map_err(|_| alloy_rlp::Error::Overflow)?,
             stats.length,
             stats.non_zeros,
             extra_gas,
