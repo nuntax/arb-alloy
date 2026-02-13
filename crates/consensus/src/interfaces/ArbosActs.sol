@@ -23,12 +23,6 @@ pragma solidity >=0.4.21 <0.9.0;
  * @notice Calling this precompile will always revert and should not be done.
  */
 interface ArbosActs {
-    /**
-     * @notice ArbOS "calls" this when starting a block
-     * @param l1BaseFee the L1 BaseFee
-     * @param l1BlockNumber the L1 block number
-     * @param timePassed number of seconds since the last block
-     */
     function startBlock(
         uint256 l1BaseFee,
         uint64 l1BlockNumber,
