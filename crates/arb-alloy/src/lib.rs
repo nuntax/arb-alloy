@@ -1,0 +1,18 @@
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+#[cfg(feature = "consensus")]
+#[doc(inline)]
+pub use arb_alloy_consensus as consensus;
+
+#[cfg(feature = "network")]
+#[doc(inline)]
+pub use arb_alloy_network as network;
+
+#[cfg(feature = "provider")]
+#[doc(inline)]
+pub use arb_alloy_provider as provider;
+
+#[cfg(feature = "rpc-types")]
+#[doc(inline)]
+pub use arb_alloy_rpc_types as rpc_types;

@@ -1,0 +1,47 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/consensus",
+  "crates/sequencer-network",
+  "crates/network",
+  "crates/rpc-types",
+  "crates/provider",
+  "crates/arb-alloy",
+]
+
+[workspace.package]
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+
+[workspace.dependencies]
+# Workspace crates
+arb-alloy-consensus = { version = "0.1.0", path = "crates/consensus", default-features = false }
+arb-alloy-network = { version = "0.1.0", path = "crates/network", default-features = false }
+arb-alloy-provider = { version = "0.1.0", path = "crates/provider", default-features = false }
+arb-alloy-rpc-types = { version = "0.1.0", path = "crates/rpc-types", default-features = false }
+arb-sequencer-network = { version = "0.1.0", path = "crates/sequencer-network", default-features = false }
+
+# Local alloy workspace deps
+# Kept as path deps so arb-alloy can track upstream alloy checkout in ../alloy during porting.
+alloy-consensus = { path = "../alloy/crates/consensus", default-features = false, features = ["k256"] }
+alloy-eips = { path = "../alloy/crates/eips", default-features = false }
+alloy-rlp = { version = "0.3.9", default-features = false }
+alloy-contract = { path = "../alloy/crates/contract", default-features = false }
+alloy-serde = { path = "../alloy/crates/serde", default-features = false }
+alloy-network = { path = "../alloy/crates/network", default-features = false }
+alloy-network-primitives = { path = "../alloy/crates/network-primitives", default-features = false }
+alloy-rpc-types-eth = { path = "../alloy/crates/rpc-types-eth", default-features = false }
+alloy-provider = { path = "../alloy/crates/provider", default-features = false }
+alloy-transport = { path = "../alloy/crates/transport", default-features = false }
+
+# External alloy-core / primitives
+alloy-core = { version = "1.4.1", default-features = false, features = ["sol-types"] }
+alloy-primitives = { version = "1.4.1", default-features = false }
+
+# External
+bytes = "1"
+serde = { version = "1", features = ["derive"] }
+serde_derive = "1"
+serde_json = "1"
+tracing = "0.1"
+async-trait = "0.1"

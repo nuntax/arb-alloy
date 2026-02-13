@@ -1,0 +1,22 @@
+[package]
+name = "arb-alloy-consensus"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Consensus-layer types for Arbitrum transactions (Alloy integration)"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-primitives.workspace = true
+alloy-rlp.workspace = true
+alloy-serde.workspace = true
+bytes.workspace = true
+serde.workspace = true
+alloy-core.workspace = true
+alloy-contract.workspace = true
+arb-sequencer-network = { path = "../sequencer-network" }
+tracing.workspace = true

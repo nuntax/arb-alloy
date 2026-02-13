@@ -1,0 +1,18 @@
+[package]
+name = "arb-alloy-provider"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Arbitrum provider extensions for Alloy"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+alloy-network.workspace = true
+alloy-provider.workspace = true
+alloy-transport.workspace = true
+alloy-rpc-types-eth.workspace = true
+arb-alloy-network = { path = "../network" }
+arb-alloy-rpc-types = { path = "../rpc-types" }
+async-trait.workspace = true

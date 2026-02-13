@@ -1,0 +1,21 @@
+[package]
+name = "arb-sequencer-network"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Network-layer types for the Arbitrum sequencer feed protocol"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-primitives.workspace = true
+alloy-rlp.workspace = true
+bytes.workspace = true
+serde.workspace = true
+alloy-core.workspace = true
+alloy-contract.workspace = true
+serde_derive.workspace = true
+serde_json.workspace = true

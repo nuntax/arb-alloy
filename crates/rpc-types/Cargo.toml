@@ -1,0 +1,21 @@
+[package]
+name = "arb-alloy-rpc-types"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+description = "Arbitrum RPC types for Alloy"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-rlp.workspace = true
+alloy-network-primitives.workspace = true
+alloy-primitives.workspace = true
+alloy-rpc-types-eth.workspace = true
+alloy-serde.workspace = true
+arb-alloy-consensus = { path = "../consensus" }
+serde.workspace = true
+serde_json.workspace = true
