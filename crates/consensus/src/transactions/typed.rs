@@ -5,16 +5,28 @@ use crate::transactions::{
     submit_retryable::SubmitRetryableTx,
 };
 
+/// Unsigned transaction variants supported by the Arbitrum network implementation.
+#[derive(Debug, Clone)]
 pub enum ArbitrumTypedTransaction {
+    /// Legacy Ethereum transaction.
     Legacy(TxLegacy),
+    /// EIP-2930 transaction.
     Eip2930(TxEip2930),
+    /// EIP-1559 transaction.
     Eip1559(TxEip1559),
+    /// EIP-7702 transaction.
     Eip7702(TxEip7702),
+    /// Arbitrum deposit transaction.
     DepositTx(TxDeposit),
+    /// Arbitrum submit-retryable transaction.
     SubmitRetryableTx(SubmitRetryableTx),
+    /// Arbitrum unsigned user transaction.
     Unsigned(TxUnsigned),
+    /// Arbitrum contract transaction.
     Contract(TxContract),
+    /// Arbitrum retry transaction.
     Retry(TxRetry),
+    /// Arbitrum internal system transaction.
     ArbitrumInternal(ArbitrumInternalTx),
 }
 

@@ -1,5 +1,16 @@
+#![doc = include_str!("../README.md")]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/alloy-rs/core/main/assets/alloy.jpg",
+    html_favicon_url = "https://raw.githubusercontent.com/alloy-rs/core/main/assets/favicon.ico"
+)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+/// Transaction receipt response types.
 pub mod receipt;
+/// Transaction request payload types.
 pub mod request;
+/// Transaction response payload types.
 pub mod transaction;
 
 pub use receipt::ArbTransactionReceipt;
@@ -14,6 +25,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbMaintenanceStatus {
+    /// Whether the publisher process is currently running.
     pub is_running: bool,
 }
 
@@ -22,8 +34,11 @@ pub struct ArbMaintenanceStatus {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbMinRequiredNitroVersion {
+    /// Minimum Nitro node semantic version required by the chain.
     pub node_version: String,
+    /// Release date associated with `node_version`.
     pub node_version_date: String,
+    /// Deadline by which the minimum version is required.
     pub upgrade_deadline: String,
 }
 
@@ -32,7 +47,9 @@ pub struct ArbMinRequiredNitroVersion {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbRawBlockMetadata {
+    /// L2 block number associated with the metadata blob.
     #[serde(with = "alloy_serde::quantity")]
     pub block_number: u64,
+    /// Raw binary metadata payload returned by Nitro.
     pub raw_metadata: Bytes,
 }

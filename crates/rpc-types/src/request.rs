@@ -2,9 +2,11 @@ use serde::{Deserialize, Serialize};
 
 use arb_alloy_consensus::ArbTxEnvelope;
 
+/// Arbitrum transaction request wrapper around Ethereum request fields.
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbTransactionRequest {
+    /// Underlying Ethereum transaction request payload.
     #[serde(flatten)]
     pub inner: alloy_rpc_types_eth::TransactionRequest,
 }

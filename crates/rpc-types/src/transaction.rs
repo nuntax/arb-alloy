@@ -6,13 +6,17 @@ use serde::{Deserialize, Serialize};
 
 use arb_alloy_consensus::ArbTxEnvelope;
 
+/// Arbitrum RPC transaction response.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(
     try_from = "tx_serde::TransactionSerdeHelper",
     into = "tx_serde::TransactionSerdeHelper"
 )]
 pub struct ArbTransaction {
+    /// Base Ethereum transaction payload carrying an Arbitrum envelope.
     pub inner: alloy_rpc_types_eth::Transaction<ArbTxEnvelope>,
+
+    /// Optional Arbitrum request identifier for L1-originated transactions.
     pub request_id: Option<B256>,
 }
 

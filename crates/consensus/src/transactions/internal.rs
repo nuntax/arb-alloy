@@ -24,17 +24,22 @@ use crate::transactions::ArbTxType;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbitrumInternalTx {
+    /// Arbitrum chain identifier.
     #[serde(with = "alloy_serde::quantity")]
     pub chain_id: ChainId,
+    /// ArbOS calldata payload.
     #[serde(rename = "input", alias = "data")]
     pub data: Bytes,
+    /// Cached transaction hash.
     #[serde(skip)]
     pub hash: OnceLock<TxHash>,
 }
 
 impl ArbitrumInternalTx {
+    /// Canonical ArbOS sender/recipient address for internal transactions.
     pub const ARBOS_ADDRESS: Address = address!("0x00000000000000000000000000000000000a4b05");
 
+    /// Creates a new internal transaction.
     pub fn new(chain_id: ChainId, data: Bytes) -> Self {
         Self {
             chain_id,
@@ -43,10 +48,12 @@ impl ArbitrumInternalTx {
         }
     }
 
+    /// Returns the canonical internal transaction sender.
     pub fn from(&self) -> Address {
         Self::ARBOS_ADDRESS
     }
 
+    /// Returns the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
         *self.hash.get_or_init(|| {
             let buffer = &mut Vec::with_capacity(self.rlp_encoded_fields_length() + 1);
@@ -55,15 +62,18 @@ impl ArbitrumInternalTx {
         })
     }
 
+    /// Encodes the inner RLP fields (without list header or type byte).
     pub fn rlp_encode_fields(&self, out: &mut dyn BufMut) {
         self.chain_id.encode(out);
         self.data.encode(out);
     }
 
+    /// Returns the encoded RLP payload length for the inner fields.
     pub fn rlp_encoded_fields_length(&self) -> usize {
         self.chain_id.length() + self.data.length()
     }
 
+    /// Returns the RLP list header for the inner payload.
     pub fn rlp_header(&self) -> Header {
         Header {
             list: true,
@@ -71,6 +81,7 @@ impl ArbitrumInternalTx {
         }
     }
 
+    /// Encodes the transaction in RLP list form (without type byte).
     pub fn rlp_encode(&self, out: &mut dyn BufMut) {
         self.rlp_header().encode(out);
         self.rlp_encode_fields(out);
@@ -80,6 +91,7 @@ impl ArbitrumInternalTx {
         self.rlp_header().length_with_payload()
     }
 
+    /// Decodes the transaction from its RLP list form (without type byte).
     pub fn rlp_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let header = Header::decode(buf)?;
         if !header.list {

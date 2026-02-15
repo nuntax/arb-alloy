@@ -14,29 +14,41 @@ use serde::{Deserialize, Serialize};
 
 use crate::transactions::ArbTxType;
 
+/// Arbitrum L1-originated unsigned user transaction (`type = 0x65`).
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TxUnsigned {
+    /// Arbitrum chain identifier.
     #[serde(alias = "chain_id")]
     pub chain_id: U256,
+    /// Sender address supplied by ArbOS.
     pub from: Address,
+    /// Sender nonce.
     pub nonce: u64,
+    /// Maximum fee per gas.
     #[serde(alias = "maxFeePerGas")]
     pub gas_fee_cap: U256,
+    /// Gas limit for execution.
     #[serde(alias = "gas")]
     pub gas_limit: u64,
+    /// Call target (or create).
     pub to: TxKind,
+    /// ETH value transferred to the target.
     pub value: U256,
+    /// Transaction calldata.
     pub input: Bytes,
+    /// Cached transaction hash.
     #[serde(skip)]
     pub hash: OnceLock<TxHash>,
 }
 
 impl TxUnsigned {
+    /// Returns the sender address.
     pub fn from(&self) -> Address {
         self.from
     }
 
+    /// Returns the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
         *self.hash.get_or_init(|| {
             let buffer = &mut Vec::with_capacity(self.rlp_encoded_fields_length() + 1);
@@ -45,6 +57,7 @@ impl TxUnsigned {
         })
     }
 
+    /// Encodes the inner RLP fields (without list header or type byte).
     pub fn rlp_encode_fields(&self, out: &mut dyn BufMut) {
         self.chain_id.encode(out);
         self.from.encode(out);
@@ -56,6 +69,7 @@ impl TxUnsigned {
         self.input.encode(out);
     }
 
+    /// Returns the encoded RLP payload length for the inner fields.
     pub fn rlp_encoded_fields_length(&self) -> usize {
         self.chain_id.length()
             + self.from.length()
@@ -67,6 +81,7 @@ impl TxUnsigned {
             + self.input.length()
     }
 
+    /// Returns the RLP list header for the inner payload.
     pub fn rlp_header(&self) -> Header {
         Header {
             list: true,
@@ -74,6 +89,7 @@ impl TxUnsigned {
         }
     }
 
+    /// Encodes the transaction in RLP list form (without type byte).
     pub fn rlp_encode(&self, out: &mut dyn BufMut) {
         self.rlp_header().encode(out);
         self.rlp_encode_fields(out);
@@ -83,6 +99,7 @@ impl TxUnsigned {
         self.rlp_header().length_with_payload()
     }
 
+    /// Decodes the transaction from its RLP list form (without type byte).
     pub fn rlp_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let header = Header::decode(buf)?;
         if !header.list {

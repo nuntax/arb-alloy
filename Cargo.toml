@@ -10,8 +10,37 @@ members = [
 ]
 
 [workspace.package]
+version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
+authors = ["Alloy Contributors"]
 license = "Apache-2.0 OR MIT"
+homepage = "https://github.com/alloy-rs/arb-alloy"
+repository = "https://github.com/alloy-rs/arb-alloy"
+exclude = ["benches/", "tests/"]
+
+[workspace.lints.rustdoc]
+all = "warn"
+
+[workspace.lints.rust]
+missing-debug-implementations = "warn"
+missing-docs = "warn"
+unreachable-pub = "warn"
+unused-must-use = "deny"
+rust-2018-idioms = "deny"
+unnameable-types = "warn"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+missing-const-for-fn = "warn"
+use-self = "warn"
+option-if-let-else = "warn"
+redundant-clone = "warn"
+result_large_err = "allow"
+
+[workspace.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [workspace.dependencies]
 # Workspace crates
@@ -21,18 +50,17 @@ arb-alloy-provider = { version = "0.1.0", path = "crates/provider", default-feat
 arb-alloy-rpc-types = { version = "0.1.0", path = "crates/rpc-types", default-features = false }
 arb-sequencer-network = { version = "0.1.0", path = "crates/sequencer-network", default-features = false }
 
-# Local alloy workspace deps
-# Kept as path deps so arb-alloy can track upstream alloy checkout in ../alloy during porting.
-alloy-consensus = { path = "../alloy/crates/consensus", default-features = false, features = ["k256"] }
-alloy-eips = { path = "../alloy/crates/eips", default-features = false }
+# Alloy
+alloy-consensus = { version = "1.6.3", default-features = false, features = ["k256"] }
+alloy-eips = { version = "1.6.3", default-features = false }
 alloy-rlp = { version = "0.3.9", default-features = false }
-alloy-contract = { path = "../alloy/crates/contract", default-features = false }
-alloy-serde = { path = "../alloy/crates/serde", default-features = false }
-alloy-network = { path = "../alloy/crates/network", default-features = false }
-alloy-network-primitives = { path = "../alloy/crates/network-primitives", default-features = false }
-alloy-rpc-types-eth = { path = "../alloy/crates/rpc-types-eth", default-features = false }
-alloy-provider = { path = "../alloy/crates/provider", default-features = false }
-alloy-transport = { path = "../alloy/crates/transport", default-features = false }
+alloy-contract = { version = "1.6.3", default-features = false }
+alloy-serde = { version = "1.6.3", default-features = false }
+alloy-network = { version = "1.6.3", default-features = false }
+alloy-network-primitives = { version = "1.6.3", default-features = false }
+alloy-rpc-types-eth = { version = "1.6.3", default-features = false }
+alloy-provider = { version = "1.6.3", default-features = false }
+alloy-transport = { version = "1.6.3", default-features = false }
 
 # External alloy-core / primitives
 alloy-core = { version = "1.4.1", default-features = false, features = ["sol-types"] }
@@ -45,3 +73,14 @@ serde_derive = "1"
 serde_json = "1"
 tracing = "0.1"
 async-trait = "0.1"
+
+[patch.crates-io]
+# alloy-consensus = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-contract = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-eips = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-network = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-network-primitives = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-provider = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-rpc-types-eth = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-serde = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }
+# alloy-transport = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }

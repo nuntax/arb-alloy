@@ -51,13 +51,20 @@ fn construct_batchreportv2_data(
     .into()
 }
 
+/// Decoded fields from an ArbOS batch posting report payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BatchPostingReportFields {
+    /// Batch timestamp recorded in the report.
     pub batch_timestamp: U256,
+    /// Address that posted the batch.
     pub batch_poster: Address,
+    /// Batch sequence number.
     pub batch_num: u64,
+    /// L1 base fee used for cost accounting.
     pub l1_base_fee: U256,
+    /// Additional gas charged by ArbOS for this batch.
     pub extra_gas: u64,
+    /// Hash of the reported batch data.
     pub data_hash: FixedBytes<32>,
 }
 

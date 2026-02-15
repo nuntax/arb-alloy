@@ -1,17 +1,29 @@
+#![doc = include_str!("../README.md")]
+#![doc(
+    html_logo_url = "https://raw.githubusercontent.com/alloy-rs/core/main/assets/alloy.jpg",
+    html_favicon_url = "https://raw.githubusercontent.com/alloy-rs/core/main/assets/favicon.ico"
+)]
+#![cfg_attr(not(test), warn(unused_crate_dependencies))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
 use alloy_consensus::{Header as EthHeader, TxType, TypedTransaction};
-use alloy_network::{BuildResult, Network, NetworkWallet, TransactionBuilder, TransactionBuilderError};
+use alloy_network::{
+    BuildResult, Network, NetworkWallet, TransactionBuilder, TransactionBuilderError,
+};
 use alloy_primitives::{Address, Bytes, ChainId, TxKind, U256};
 use alloy_rpc_types_eth::Block;
 
 use arb_alloy_consensus::{ArbReceiptEnvelope, ArbTxEnvelope, ArbTxType, ArbTypedTransaction};
 use arb_alloy_rpc_types::{ArbTransaction, ArbTransactionReceipt, ArbTransactionRequest};
 
+/// Alloy `Network` implementation for Arbitrum.
 #[derive(Clone, Copy, Debug)]
 pub struct Arbitrum {
     _private: (),
 }
 
 impl Arbitrum {
+    /// Creates a new Arbitrum network marker type.
     pub const fn new() -> Self {
         Self { _private: () }
     }
@@ -225,8 +237,10 @@ impl TransactionBuilder<Arbitrum> for ArbTransactionRequest {
 
         if let Err((tx_type, missing)) = self.inner.missing_keys() {
             let arb_ty = arb_tx_type_from_eth(tx_type).unwrap_or(ArbTxType::Eip1559);
-            return Err(TransactionBuilderError::InvalidTransactionRequest(arb_ty, missing)
-                .into_unbuilt(self));
+            return Err(
+                TransactionBuilderError::InvalidTransactionRequest(arb_ty, missing)
+                    .into_unbuilt(self),
+            );
         }
 
         let typed = self

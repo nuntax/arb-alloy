@@ -6,9 +6,11 @@ use serde::{Deserialize, Serialize};
 use alloy_rpc_types_eth::Log as RpcLog;
 use arb_alloy_consensus::ArbReceiptEnvelope;
 
+/// Arbitrum transaction receipt response with Nitro extensions.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbTransactionReceipt {
+    /// Base Ethereum receipt payload with typed Arbitrum receipt envelope.
     #[serde(flatten)]
     pub inner: alloy_rpc_types_eth::TransactionReceipt<ArbReceiptEnvelope<RpcLog>>,
 

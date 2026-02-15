@@ -51,13 +51,16 @@ pub struct SubmitRetryableTx {
 }
 
 impl SubmitRetryableTx {
+    /// ArbOS precompile address that receives submit-retryable calls.
     pub const ARB_RETRYABLE_TX_ADDRESS: Address =
         address!("0x000000000000000000000000000000000000006e");
 
+    /// Returns the L1 sender that created the retryable ticket.
     pub fn from(&self) -> Address {
         self.from
     }
 
+    /// Constructs a new submit-retryable transaction body.
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         chain_id: U256,
@@ -94,6 +97,7 @@ impl SubmitRetryableTx {
         }
     }
 
+    /// Returns the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
         *self.tx_hash.get_or_init(|| {
             let mut encoded = Vec::new();
@@ -190,6 +194,7 @@ impl SubmitRetryableTx {
         Encodable::encode(&self.retry_data, out);
     }
 
+    /// Returns the RLP list header for the inner payload.
     pub fn rlp_header(&self) -> Header {
         Header {
             list: true,
@@ -258,6 +263,7 @@ impl SubmitRetryableTx {
             calldata: OnceLock::new(),
         })
     }
+    /// Decodes the transaction from its RLP list form (without type byte).
     pub fn rlp_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let header = Header::decode(buf)?;
         if !header.list {

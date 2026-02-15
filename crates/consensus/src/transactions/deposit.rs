@@ -24,25 +24,34 @@ use serde::{Deserialize, Serialize};
 
 use crate::transactions::ArbTxType;
 
+/// Arbitrum L1 ETH deposit transaction (`type = 0x64`).
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TxDeposit {
+    /// Arbitrum chain identifier.
     #[serde(alias = "chain_id")]
     pub chain_id: U256,
+    /// L1 request identifier for this deposit.
     #[serde(alias = "request_id")]
     pub request_id: FixedBytes<32>,
+    /// Depositor address.
     pub from: Address,
+    /// Recipient address on L2.
     pub to: Address,
+    /// Deposited ETH value.
     pub value: U256,
+    /// Cached transaction hash.
     #[serde(skip)]
     pub hash: OnceLock<TxHash>,
 }
 
 impl TxDeposit {
+    /// Returns the sender/depositor address.
     pub fn from(&self) -> Address {
         self.from
     }
 
+    /// Returns the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
         *self.hash.get_or_init(|| {
             let buffer = &mut Vec::with_capacity(self.rlp_encoded_fields_length());
@@ -50,6 +59,7 @@ impl TxDeposit {
             keccak256(buffer)
         })
     }
+    /// Decodes sequencer feed fields for an ETH deposit payload.
     pub fn decode_fields_sequencer(
         buf: &mut &[u8],
         chain_id: U256,
@@ -67,6 +77,7 @@ impl TxDeposit {
             hash: OnceLock::new(),
         })
     }
+    /// Encodes the inner RLP fields (without list header or type byte).
     pub fn rlp_encode_fields(&self, out: &mut dyn BufMut) {
         self.chain_id.encode(out);
         self.request_id.encode(out);
@@ -74,6 +85,7 @@ impl TxDeposit {
         self.to.encode(out);
         self.value.encode(out);
     }
+    /// Returns the encoded RLP payload length for the inner fields.
     pub fn rlp_encoded_fields_length(&self) -> usize {
         self.chain_id.length()
             + self.request_id.length()
@@ -81,16 +93,19 @@ impl TxDeposit {
             + self.to.length()
             + self.value.length()
     }
+    /// Returns the RLP list header for the inner payload.
     pub fn rlp_header(&self) -> Header {
         Header {
             list: true,
             payload_length: self.rlp_encoded_fields_length(),
         }
     }
+    /// Encodes the transaction in RLP list form (without type byte).
     pub fn rlp_encode(&self, out: &mut dyn BufMut) {
         self.rlp_header().encode(out);
         self.rlp_encode_fields(out);
     }
+    /// Decodes the transaction from its RLP list form (without type byte).
     pub fn rlp_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let header = Header::decode(buf)?;
         if !header.list {
@@ -102,6 +117,7 @@ impl TxDeposit {
         self.rlp_header().length_with_payload()
     }
 
+    /// Decodes inner RLP fields for a deposit transaction.
     pub fn rlp_decode_fields(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let chain_id: U256 = Decodable::decode(buf)?;
         let request_id: FixedBytes<32> = Decodable::decode(buf)?;

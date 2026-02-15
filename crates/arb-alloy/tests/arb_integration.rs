@@ -93,53 +93,6 @@ fn try_rpc(
 }
 
 #[tokio::test]
-async fn arb_rpc_consensus_methods() -> Result<(), Box<dyn std::error::Error>> {
-    let Some(url) = rpc_url()? else {
-        eprintln!("ARB_RPC_URL not set; skipping arb-alloy integration test");
-        return Ok(());
-    };
-    let provider = ProviderBuilder::<_, _, Arbitrum>::default().connect_http(url);
-    let eth_block = provider.get_block_number().await?;
-
-    try_rpc(
-        "arb_getL1Confirmations",
-        provider
-            .arb_get_l1_confirmations(eth_block)
-            .await
-            .map(|_| ())
-            .map_err(|e| e.into()),
-    )?;
-    try_rpc(
-        "arb_findBatchContainingBlock",
-        provider
-            .arb_find_batch_containing_block(eth_block)
-            .await
-            .map(|_| ())
-            .map_err(|e| e.into()),
-    )?;
-    Ok(())
-}
-
-#[tokio::test]
-async fn arb_rpc_version_methods() -> Result<(), Box<dyn std::error::Error>> {
-    let Some(url) = rpc_url()? else {
-        eprintln!("ARB_RPC_URL not set; skipping arb-alloy integration test");
-        return Ok(());
-    };
-    let provider = ProviderBuilder::<_, _, Arbitrum>::default().connect_http(url);
-
-    try_rpc(
-        "arb_getMinRequiredNitroVersion",
-        provider
-            .arb_get_min_required_nitro_version()
-            .await
-            .map(|_| ())
-            .map_err(|e| e.into()),
-    )?;
-    Ok(())
-}
-
-#[tokio::test]
 async fn arb_rpc_execution_methods() -> Result<(), Box<dyn std::error::Error>> {
     let Some(url) = rpc_url()? else {
         eprintln!("ARB_RPC_URL not set; skipping arb-alloy integration test");

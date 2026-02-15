@@ -1,9 +1,17 @@
 [package]
 name = "arb-alloy-rpc-types"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+exclude.workspace = true
 description = "Arbitrum RPC types for Alloy"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/lib.rs"
@@ -16,6 +24,11 @@ alloy-network-primitives.workspace = true
 alloy-primitives.workspace = true
 alloy-rpc-types-eth.workspace = true
 alloy-serde.workspace = true
-arb-alloy-consensus = { path = "../consensus" }
+arb-alloy-consensus.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+
+[features]
+default = ["std"]
+std = []
+serde = []

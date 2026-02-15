@@ -20,13 +20,16 @@ use std::vec::Vec;
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArbReceipt<T = Log> {
+    /// Standard Ethereum receipt payload.
     #[serde(flatten)]
     pub inner: Receipt<T>,
+    /// Additional L1 gas accounted by Nitro for this transaction.
     #[serde(default, with = "alloy_serde::quantity")]
     pub gas_used_for_l1: u64,
 }
 
 impl<T> ArbReceipt<T> {
+    /// Constructs a new Arbitrum receipt wrapper from an Ethereum receipt.
     pub const fn new(inner: Receipt<T>) -> Self {
         Self {
             inner,
@@ -34,10 +37,12 @@ impl<T> ArbReceipt<T> {
         }
     }
 
+    /// Returns the inner Ethereum receipt.
     pub const fn as_receipt(&self) -> &Receipt<T> {
         &self.inner
     }
 
+    /// Maps logs while preserving Arbitrum-specific receipt metadata.
     pub fn map_logs<U>(self, f: impl FnMut(T) -> U) -> ArbReceipt<U> {
         ArbReceipt {
             inner: self.inner.map_logs(f),
@@ -79,26 +84,37 @@ impl<T: Decodable> RlpDecodableReceipt for ArbReceipt<T> {
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 pub enum ArbReceiptEnvelope<T = Log> {
+    /// Legacy receipt (`type = 0x0`).
     #[serde(rename = "0x0", alias = "0x00")]
     Legacy(ReceiptWithBloom<ArbReceipt<T>>),
+    /// EIP-2930 receipt (`type = 0x1`).
     #[serde(rename = "0x1", alias = "0x01")]
     Eip2930(ReceiptWithBloom<ArbReceipt<T>>),
+    /// EIP-1559 receipt (`type = 0x2`).
     #[serde(rename = "0x2", alias = "0x02")]
     Eip1559(ReceiptWithBloom<ArbReceipt<T>>),
+    /// EIP-4844 receipt (`type = 0x3`).
     #[serde(rename = "0x3", alias = "0x03")]
     Eip4844(ReceiptWithBloom<ArbReceipt<T>>),
+    /// EIP-7702 receipt (`type = 0x4`).
     #[serde(rename = "0x4", alias = "0x04")]
     Eip7702(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum deposit receipt (`type = 0x64`).
     #[serde(rename = "0x64")]
     Deposit(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum unsigned L1-originated receipt (`type = 0x65`).
     #[serde(rename = "0x65")]
     Unsigned(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum contract receipt (`type = 0x66`).
     #[serde(rename = "0x66")]
     Contract(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum retry receipt (`type = 0x68`).
     #[serde(rename = "0x68")]
     Retry(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum submit-retryable receipt (`type = 0x69`).
     #[serde(rename = "0x69")]
     SubmitRetryable(ReceiptWithBloom<ArbReceipt<T>>),
+    /// Arbitrum internal system receipt (`type = 0x6a`).
     #[serde(rename = "0x6a", alias = "0x6A")]
     Internal(ReceiptWithBloom<ArbReceipt<T>>),
 }

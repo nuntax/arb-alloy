@@ -1,9 +1,17 @@
 [package]
 name = "arb-alloy-consensus"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
 license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+exclude.workspace = true
 description = "Consensus-layer types for Arbitrum transactions (Alloy integration)"
+
+[lints]
+workspace = true
 
 [lib]
 path = "src/lib.rs"
@@ -20,3 +28,12 @@ alloy-core.workspace = true
 alloy-contract.workspace = true
 arb-sequencer-network = { path = "../sequencer-network" }
 tracing.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
+
+[features]
+default = ["std"]
+std = []
+serde = []
+k256 = []

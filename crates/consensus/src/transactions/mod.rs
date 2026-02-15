@@ -10,40 +10,60 @@ pub use retry::TxRetry;
 pub use unsigned::TxUnsigned;
 
 use crate::transactions::{internal::ArbitrumInternalTx, submit_retryable::SubmitRetryableTx};
+/// Batch posting report decoder utilities.
 pub mod batchpostingreport;
+/// Arbitrum contract transaction type (`0x66`).
 pub mod contract;
+/// Arbitrum deposit transaction type (`0x64`).
 pub mod deposit;
+/// Arbitrum internal system transaction type (`0x6a`).
 pub mod internal;
+/// Arbitrum retry transaction type (`0x68`).
 pub mod retry;
-pub mod retryable;
+/// Arbitrum submit-retryable transaction type (`0x69`).
 pub mod submit_retryable;
+/// Typed unsigned transaction enum used by builders.
 pub mod typed;
+/// Arbitrum unsigned transaction type (`0x65`).
 pub mod unsigned;
+/// Shared decode helpers for sequencer-originated payloads.
 pub mod util;
 
 #[cfg(test)]
 mod nitro_hash_tests;
+
+/// Arbitrum transaction envelope that includes Ethereum and Nitro transaction variants.
 #[derive(Debug, Clone, TransactionEnvelope)]
 #[envelope(tx_type_name = ArbTxType)]
 pub enum ArbTxEnvelope {
+    /// Legacy Ethereum signed transaction.
     #[envelope(ty = 0)]
     Legacy(Signed<TxLegacy>),
+    /// EIP-2930 signed transaction.
     #[envelope(ty = 1)]
     Eip2930(Signed<TxEip2930>),
+    /// EIP-1559 signed transaction.
     #[envelope(ty = 2)]
     Eip1559(Signed<TxEip1559>),
+    /// EIP-7702 signed transaction.
     #[envelope(ty = 4)]
     Eip7702(Signed<TxEip7702>),
+    /// Arbitrum deposit transaction.
     #[envelope(ty = 0x64)]
     DepositTx(Sealed<TxDeposit>),
+    /// Arbitrum submit-retryable transaction.
     #[envelope(ty = 0x69)]
     SubmitRetryableTx(Sealed<SubmitRetryableTx>),
+    /// Arbitrum unsigned user transaction.
     #[envelope(ty = 0x65)]
     Unsigned(Sealed<TxUnsigned>),
+    /// Arbitrum contract transaction.
     #[envelope(ty = 0x66)]
     Contract(Sealed<TxContract>),
+    /// Arbitrum retry transaction.
     #[envelope(ty = 0x68)]
     Retry(Sealed<TxRetry>),
+    /// Arbitrum internal system transaction.
     #[envelope(ty = 0x6a)]
     ArbitrumInternal(Sealed<ArbitrumInternalTx>),
 }
