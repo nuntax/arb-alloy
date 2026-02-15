@@ -27,7 +27,6 @@ serde.workspace = true
 alloy-core.workspace = true
 alloy-contract.workspace = true
 arb-sequencer-network = { path = "../sequencer-network" }
-tracing.workspace = true
 
 [dev-dependencies]
 serde_json.workspace = true

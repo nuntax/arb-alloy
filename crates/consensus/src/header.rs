@@ -11,11 +11,15 @@ pub const ARB_HEADER_EXTRA_DATA_LEN: usize = 32 + 8 + 8 + 8;
 )]
 #[serde(rename_all = "camelCase")]
 pub struct ArbHeaderInfo {
+    /// Merkle root of the delayed send queue.
     pub send_root: B256,
+    /// Number of sends included so far.
     #[serde(with = "alloy_serde::quantity")]
     pub send_count: u64,
+    /// L1 block number observed by ArbOS for this L2 block.
     #[serde(with = "alloy_serde::quantity")]
     pub l1_block_number: u64,
+    /// ArbOS format version encoded into the header.
     #[serde(with = "alloy_serde::quantity")]
     pub arbos_format_version: u64,
 }
@@ -23,7 +27,11 @@ pub struct ArbHeaderInfo {
 /// Error while decoding Arbitrum header info from `Header.extra_data`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ArbHeaderDecodeError {
-    InvalidLength { got: usize },
+    /// The `extra_data` byte length did not match Arbitrum's expected format.
+    InvalidLength {
+        /// Number of bytes present in `extra_data`.
+        got: usize,
+    },
 }
 
 impl fmt::Display for ArbHeaderDecodeError {

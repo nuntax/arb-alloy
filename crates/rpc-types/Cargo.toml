@@ -19,7 +19,6 @@ path = "src/lib.rs"
 [dependencies]
 alloy-consensus.workspace = true
 alloy-eips.workspace = true
-alloy-rlp.workspace = true
 alloy-network-primitives.workspace = true
 alloy-primitives.workspace = true
 alloy-rpc-types-eth.workspace = true
