@@ -1,0 +1,62 @@
+alloy_core::sol! {
+    /// NodeInterface: virtual meta-contract for node-level queries.
+    ///
+    /// This is not a real on-chain contract — calls are intercepted and
+    /// handled by the node software. Useful for gas estimation, batch
+    /// queries, and L1 confirmation checks.
+    ///
+    /// Nitro reference: `nitro/nodeInterface/NodeInterface.go`.
+    #[sol(rpc)]
+    interface NodeInterface {
+        /// Returns the Nitro genesis block number.
+        function nitroGenesisBlock() external view returns (uint256);
+
+        /// Returns the batch number containing the given L2 block.
+        function findBatchContainingBlock(uint64 blockNum) external view returns (uint64);
+
+        /// Returns the number of L1 confirmations for the given block hash.
+        function getL1Confirmations(bytes32 blockHash) external view returns (uint64);
+
+        /// Estimates the cost of submitting a retryable ticket.
+        function estimateRetryableTicket(
+            address sender,
+            uint256 deposit,
+            address to,
+            uint256 l2CallValue,
+            address excessFeeRefundAddress,
+            address callValueRefundAddress,
+            bytes calldata data
+        ) external;
+
+        /// Returns the L1 component of gas estimation for a transaction.
+        /// Returns: (gasEstimateForL1, baseFee, l1BaseFeeEstimate).
+        function gasEstimateL1Component(
+            address to,
+            bool contractCreation,
+            bytes calldata data
+        ) external payable returns (uint64, uint256, uint256);
+
+        /// Returns components of gas estimation.
+        /// Returns: (gasEstimate, gasEstimateForL1, baseFee, l1BaseFeeEstimate).
+        function gasEstimateComponents(
+            address to,
+            bool contractCreation,
+            bytes calldata data
+        ) external payable returns (uint64, uint64, uint256, uint256);
+
+        /// Returns the L2 block range corresponding to a given L1 block number.
+        function l2BlockRangeForL1(uint64 blockNum)
+            external
+            view
+            returns (uint64 firstBlock, uint64 lastBlock);
+
+        /// Constructs an outbox proof for an L2→L1 send.
+        function constructOutboxProof(uint64 size, uint64 leaf)
+            external
+            view
+            returns (bytes32 send, bytes32 root, bytes32[] memory proof);
+
+        /// Returns the L1 block number corresponding to a given message index.
+        function blockL1Num(uint64 l2BlockNum) external view returns (uint64);
+    }
+}

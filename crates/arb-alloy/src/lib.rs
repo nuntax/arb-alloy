@@ -14,6 +14,10 @@ pub use arb_alloy_consensus as consensus;
 #[doc(inline)]
 pub use arb_alloy_network as network;
 
+#[cfg(feature = "precompiles")]
+#[doc(inline)]
+pub use arb_alloy_precompiles as precompiles;
+
 #[cfg(feature = "provider")]
 #[doc(inline)]
 pub use arb_alloy_provider as provider;

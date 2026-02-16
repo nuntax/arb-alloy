@@ -6,15 +6,24 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+/// `arbdebug_*` namespace types.
+pub mod arbdebug;
+/// `arbtrace_*` namespace types.
+pub mod arbtrace;
 /// Transaction receipt response types.
 pub mod receipt;
 /// Transaction request payload types.
 pub mod request;
+/// Timeboost / auctioneer namespace types.
+pub mod timeboost;
 /// Transaction response payload types.
 pub mod transaction;
 
+pub use arbdebug::{PricingModelHistory, TimeoutQueue, TimeoutQueueHistory};
+pub use arbtrace::TraceFilter;
 pub use receipt::ArbTransactionReceipt;
 pub use request::ArbTransactionRequest;
+pub use timeboost::JsonExpressLaneSubmission;
 pub use transaction::ArbTransaction;
 
 use alloy_primitives::Bytes;

@@ -18,12 +18,14 @@ path = "src/lib.rs"
 
 [dependencies]
 alloy-network.workspace = true
+alloy-primitives.workspace = true
 alloy-provider = { workspace = true, features = ["reqwest", "reqwest-default-tls"] }
 alloy-transport.workspace = true
 alloy-rpc-types-eth.workspace = true
 arb-alloy-network.workspace = true
 arb-alloy-rpc-types.workspace = true
 async-trait.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

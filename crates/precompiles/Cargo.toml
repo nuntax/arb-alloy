@@ -1,0 +1,26 @@
+[package]
+name = "arb-alloy-precompiles"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+exclude.workspace = true
+description = "Arbitrum precompile address constants and sol! interface bindings"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+alloy-contract.workspace = true
+alloy-core.workspace = true
+alloy-primitives.workspace = true
+
+[features]
+default = ["std"]
+std = []

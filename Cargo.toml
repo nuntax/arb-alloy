@@ -6,6 +6,7 @@ members = [
   "crates/network",
   "crates/rpc-types",
   "crates/provider",
+  "crates/precompiles",
   "crates/arb-alloy",
 ]
 
@@ -46,6 +47,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 # Workspace crates
 arb-alloy-consensus = { version = "0.1.0", path = "crates/consensus", default-features = false }
 arb-alloy-network = { version = "0.1.0", path = "crates/network", default-features = false }
+arb-alloy-precompiles = { version = "0.1.0", path = "crates/precompiles", default-features = false }
 arb-alloy-provider = { version = "0.1.0", path = "crates/provider", default-features = false }
 arb-alloy-rpc-types = { version = "0.1.0", path = "crates/rpc-types", default-features = false }
 arb-sequencer-network = { version = "0.1.0", path = "crates/sequencer-network", default-features = false }
