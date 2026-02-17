@@ -47,8 +47,7 @@ impl fmt::Display for ArbHeaderDecodeError {
     }
 }
 
-impl std::error::Error for ArbHeaderDecodeError {}
-
+impl core::error::Error for ArbHeaderDecodeError {}
 impl ArbHeaderInfo {
     /// Returns true when this header info encodes an ArbOS format version.
     pub const fn is_arbitrum(&self) -> bool {

@@ -1,4 +1,5 @@
-use std::sync::OnceLock;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use alloy_consensus::{Transaction, Typed2718};
 use alloy_eips::{
@@ -18,7 +19,7 @@ use crate::transactions::{
     ArbTxType,
     util::{decode, decode_rest},
 };
-/// https://github.com/OffchainLabs/nitro/blob/23cae22e1f76cf3675f965d78e268fd2870d8708/arbos/parse_l2.go#L292
+/// <https://github.com/OffchainLabs/nitro/blob/23cae22e1f76cf3675f965d78e268fd2870d8708/arbos/parse_l2.go#L292>
 #[derive(PartialEq, Debug, Clone, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SubmitRetryableTx {
@@ -28,26 +29,25 @@ pub struct SubmitRetryableTx {
     request_id: B256,
     from: Address,
     #[serde(alias = "l1Basefee")]
-    l1_base_fee: U256, // base fee of the L1 transaction that created this retryable
+    l1_base_fee: U256,
 
     deposit_value: U256,
     #[serde(alias = "maxFeePerGas")]
-    gas_fee_cap: U256, //maxFeePerGas
+    gas_fee_cap: U256,
     #[serde(alias = "gas")]
     gas_limit: U256,
     retry_to: TxKind,
-    retry_value: U256,    //call value
-    beneficiary: Address, //callvalue refund address
+    retry_value: U256,
+    beneficiary: Address,
     max_submission_fee: U256,
     #[serde(alias = "refundTo", alias = "feeRefundAddr")]
     fee_refund_address: Address,
     #[serde(default)]
     retry_data_size: U256,
     retry_data: Bytes,
+    /// Pre-built ABI-encoded calldata for `Transaction::input()`.
     #[serde(skip)]
-    tx_hash: OnceLock<TxHash>,
-    #[serde(skip)]
-    calldata: OnceLock<Bytes>,
+    calldata: Bytes,
 }
 
 impl SubmitRetryableTx {
@@ -77,7 +77,7 @@ impl SubmitRetryableTx {
         fee_refund_address: Address,
         retry_data: Bytes,
     ) -> Self {
-        Self {
+        let mut this = Self {
             chain_id,
             request_id,
             from,
@@ -92,21 +92,19 @@ impl SubmitRetryableTx {
             fee_refund_address,
             retry_data_size: U256::from(retry_data.len()),
             retry_data,
-            tx_hash: OnceLock::new(),
-            calldata: OnceLock::new(),
-        }
+            calldata: Bytes::new(),
+        };
+        this.calldata = this.build_calldata();
+        this
     }
 
-    /// Returns the EIP-2718 transaction hash.
+    /// Computes the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
-        *self.tx_hash.get_or_init(|| {
-            let mut encoded = Vec::new();
-            self.encode_2718(&mut encoded);
-            keccak256(&encoded)
-        })
+        let mut buf = Vec::with_capacity(self.encode_2718_len());
+        self.encode_2718(&mut buf);
+        keccak256(&buf)
     }
 
-    // ...existing code...
     fn build_calldata(&self) -> Bytes {
         let mut retry_to = Address::ZERO;
         if let TxKind::Call(addr) = self.retry_to {
@@ -142,9 +140,6 @@ impl SubmitRetryableTx {
         with_selector.into()
     }
 
-    fn calldata(&self) -> &Bytes {
-        self.calldata.get_or_init(|| self.build_calldata())
-    }
     fn rlp_decode_fields(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
         let chain_id: U256 = Decodable::decode(buf)?;
         let request_id: FixedBytes<32> = Decodable::decode(buf)?;
@@ -159,7 +154,7 @@ impl SubmitRetryableTx {
         let max_submission_fee: U256 = Decodable::decode(buf)?;
         let fee_refund_address: Address = Decodable::decode(buf)?;
         let retry_data: Bytes = Decodable::decode(buf)?;
-        Ok(Self {
+        let mut this = Self {
             chain_id,
             request_id: B256::from(request_id.0),
             from,
@@ -174,9 +169,10 @@ impl SubmitRetryableTx {
             fee_refund_address,
             retry_data_size: U256::from(retry_data.len()),
             retry_data,
-            tx_hash: OnceLock::new(),
-            calldata: OnceLock::new(),
-        })
+            calldata: Bytes::new(),
+        };
+        this.calldata = this.build_calldata();
+        Ok(this)
     }
     fn rlp_encode_fields(&self, out: &mut dyn BufMut) {
         Encodable::encode(&self.chain_id, out);
@@ -202,26 +198,21 @@ impl SubmitRetryableTx {
         }
     }
 
-    /// Returns the length of the encoding produced by encode_for_hash
+    /// Returns the length of the encoding produced by encode_for_hash.
     pub fn rlp_encoded_fields_length(&self) -> usize {
-        let mut len = 0;
-        len += self.chain_id.length();
-        // RequestId (zero padded to 32 bytes after stripping zeros)
-        len += self.request_id.length();
-        len += self.from.length();
-        len += self.l1_base_fee.length();
-        len += self.deposit_value.length();
-        len += self.gas_fee_cap.length();
-        len += self.gas_limit.length();
-
-        len += self.retry_to.length();
-
-        len += self.retry_value.length();
-        len += self.beneficiary.length();
-        len += self.max_submission_fee.length();
-        len += self.fee_refund_address.length();
-        len += self.retry_data.length();
-        len
+        self.chain_id.length()
+            + self.request_id.length()
+            + self.from.length()
+            + self.l1_base_fee.length()
+            + self.deposit_value.length()
+            + self.gas_fee_cap.length()
+            + self.gas_limit.length()
+            + self.retry_to.length()
+            + self.retry_value.length()
+            + self.beneficiary.length()
+            + self.max_submission_fee.length()
+            + self.fee_refund_address.length()
+            + self.retry_data.length()
     }
     /// Decodes a retryable transaction in the format used by the sequencer.
     pub fn decode_fields_sequencer(
@@ -233,18 +224,16 @@ impl SubmitRetryableTx {
     ) -> alloy_rlp::Result<Self> {
         buf.advance(12);
         let retry_to_decoded: Address = decode(buf)?;
-        // if retry_to is zero address, we set it to None
         let retry_to = if retry_to_decoded == Address::default() {
             TxKind::Create
         } else {
             TxKind::Call(retry_to_decoded)
         };
-        Ok(Self {
+        let mut this = Self {
             retry_to,
             retry_value: decode(buf)?,
             deposit_value: decode(buf)?,
             max_submission_fee: decode(buf).inspect(|_| {
-                //we have to advance the buffer here because addresses are 20 bytes but nitro for some reason encodes them as 32 bytes, probably to pad them to u256
                 buf.advance(12);
             })?,
             fee_refund_address: decode(buf).inspect(|_| {
@@ -255,13 +244,14 @@ impl SubmitRetryableTx {
             gas_fee_cap: decode(buf)?,
             retry_data_size: decode(buf)?,
             retry_data: decode_rest(buf),
-            chain_id,     // chain_id is not part of the retryable transaction encoding
-            request_id,   // request_id is not part of the retryable transaction encoding
-            from: sender, // from is not part of the retryable transaction encoding
-            l1_base_fee,  // l1_base_fee is not part of the retryable transaction encoding
-            tx_hash: OnceLock::new(),
-            calldata: OnceLock::new(),
-        })
+            chain_id,
+            request_id,
+            from: sender,
+            l1_base_fee,
+            calldata: Bytes::new(),
+        };
+        this.calldata = this.build_calldata();
+        Ok(this)
     }
     /// Decodes the transaction from its RLP list form (without type byte).
     pub fn rlp_decode(buf: &mut &[u8]) -> alloy_rlp::Result<Self> {
@@ -316,22 +306,18 @@ impl Decodable2718 for SubmitRetryableTx {
 }
 
 impl Transaction for SubmitRetryableTx {
-    #[doc = " Get `chain_id`."]
     fn chain_id(&self) -> Option<ChainId> {
         Some(self.chain_id.to())
     }
 
-    #[doc = " Get `nonce`."]
     fn nonce(&self) -> u64 {
         0
     }
 
-    #[doc = " Get `gas_limit`."]
     fn gas_limit(&self) -> u64 {
         self.gas_limit.to()
     }
 
-    #[doc = " Get `gas_price`."]
     fn gas_price(&self) -> Option<u128> {
         Some(self.gas_fee_cap.to())
     }
@@ -341,20 +327,18 @@ impl Transaction for SubmitRetryableTx {
         self.gas_fee_cap.to()
     }
 
-    ///returns none for retryable transactions
     fn max_priority_fee_per_gas(&self) -> Option<u128> {
         None
     }
 
-    /// None for retryable transactions
     fn max_fee_per_blob_gas(&self) -> Option<u128> {
         None
     }
-    /// Returns the gas fee cap, same as gas_price.
+
     fn priority_fee_or_price(&self) -> u128 {
         self.gas_fee_cap.to()
     }
-    /// Dont use this for retryable transactions, it returns 0.
+
     #[allow(unused_variables)]
     fn effective_gas_price(&self, base_fee: Option<u64>) -> u128 {
         base_fee
@@ -362,70 +346,50 @@ impl Transaction for SubmitRetryableTx {
             .unwrap_or_else(|| self.gas_fee_cap.to())
     }
 
-    #[doc = " Returns `true` if the transaction supports dynamic fees."]
     fn is_dynamic_fee(&self) -> bool {
         false
     }
 
-    #[doc = " Returns the transaction kind."]
     fn kind(&self) -> TxKind {
         TxKind::Call(Self::ARB_RETRYABLE_TX_ADDRESS)
     }
 
-    #[doc = " Returns true if the transaction is a contract creation."]
-    #[doc = " We don\'t provide a default implementation via `kind` as it copies the 21-byte"]
-    #[doc = " [`TxKind`] for this simple check. A proper implementation shouldn\'t allocate."]
     fn is_create(&self) -> bool {
         false
     }
 
-    #[doc = " Get `value`."]
     fn value(&self) -> U256 {
         U256::ZERO
     }
 
-    #[doc = " Get `data`."]
     fn input(&self) -> &Bytes {
-        self.calldata()
+        &self.calldata
     }
 
-    /// Doesn't apply to retryable transactions.
     fn access_list(&self) -> Option<&AccessList> {
         None
     }
 
-    /// Doesn't apply to retryable transactions.
     fn blob_versioned_hashes(&self) -> Option<&[B256]> {
         None
     }
 
-    /// Doesn't apply to retryable transactions.
     fn authorization_list(&self) -> Option<&[SignedAuthorization]> {
         None
     }
 }
 
 impl Typed2718 for SubmitRetryableTx {
-    #[doc = " Returns the EIP-2718 type flag."]
     fn ty(&self) -> u8 {
         ArbTxType::SubmitRetryableTx as u8
     }
 }
 
 impl Encodable2718 for SubmitRetryableTx {
-    #[doc = " The length of the 2718 encoded envelope. This is the length of the type"]
-    #[doc = " flag + the length of the inner encoding."]
     fn encode_2718_len(&self) -> usize {
         self.rlp_encoded_length() + 1
     }
 
-    #[doc = " Encode the transaction according to [EIP-2718] rules. First a 1-byte"]
-    #[doc = " type flag in the range 0x0-0x7f, then the body of the transaction."]
-    #[doc = ""]
-    #[doc = " [EIP-2718] inner encodings are unspecified, and produce an opaque"]
-    #[doc = " bytestring."]
-    #[doc = ""]
-    #[doc = " [EIP-2718]: https://eips.ethereum.org/EIPS/eip-2718"]
     fn encode_2718(&self, out: &mut dyn BufMut) {
         out.put_u8(self.ty());
         self.rlp_encode(out);

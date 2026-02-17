@@ -27,7 +27,6 @@ fn nitro_hash_vectors_arbitrum_types() {
         to: TxKind::Call(addr2),
         value: U256::from(100u64),
         input: Bytes::from(vec![0xde, 0xad, 0xbe, 0xef]),
-        hash: Default::default(),
     };
     assert_eq!(
         unsigned.tx_hash(),
@@ -44,7 +43,6 @@ fn nitro_hash_vectors_arbitrum_types() {
         to: TxKind::Call(addr2),
         value: U256::from(1u64),
         input: Bytes::from(vec![0xab, 0xcd, 0xef]),
-        hash: Default::default(),
     };
     assert_eq!(
         contract.tx_hash(),
@@ -65,7 +63,6 @@ fn nitro_hash_vectors_arbitrum_types() {
         refund_to: addr3,
         max_refund: U256::from(1000u64),
         submission_fee_refund: U256::from(2000u64),
-        hash: Default::default(),
     };
     assert_eq!(
         retry.tx_hash(),
@@ -100,7 +97,6 @@ fn nitro_hash_vectors_arbitrum_types() {
         from: addr1,
         to: addr2,
         value: U256::from(123u64),
-        hash: Default::default(),
     };
     assert_eq!(
         deposit.tx_hash(),

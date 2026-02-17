@@ -10,8 +10,8 @@ use alloy_eips::{
 };
 use alloy_primitives::{Bloom, Log};
 use alloy_rlp::{BufMut, Decodable, Encodable};
+use alloc::vec::Vec;
 use core::fmt;
-use std::vec::Vec;
 
 /// Arbitrum receipt body.
 ///

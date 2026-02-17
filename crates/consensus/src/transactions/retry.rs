@@ -1,4 +1,4 @@
-use std::sync::OnceLock;
+use alloc::vec::Vec;
 
 use alloy_consensus::{Transaction, Typed2718};
 use alloy_eips::{
@@ -45,9 +45,6 @@ pub struct TxRetry {
     pub max_refund: U256,
     /// Submission fee refund amount.
     pub submission_fee_refund: U256,
-    /// Cached transaction hash.
-    #[serde(skip)]
-    pub hash: OnceLock<TxHash>,
 }
 
 impl TxRetry {
@@ -56,13 +53,11 @@ impl TxRetry {
         self.from
     }
 
-    /// Returns the EIP-2718 transaction hash.
+    /// Computes the EIP-2718 transaction hash.
     pub fn tx_hash(&self) -> TxHash {
-        *self.hash.get_or_init(|| {
-            let buffer = &mut Vec::with_capacity(self.rlp_encoded_fields_length() + 1);
-            self.encode_2718(buffer);
-            keccak256(buffer)
-        })
+        let mut buf = Vec::with_capacity(self.encode_2718_len());
+        self.encode_2718(&mut buf);
+        keccak256(&buf)
     }
 
     /// Encodes the inner RLP fields (without list header or type byte).
@@ -146,7 +141,6 @@ impl TxRetry {
             refund_to,
             max_refund,
             submission_fee_refund,
-            hash: OnceLock::new(),
         })
     }
 }

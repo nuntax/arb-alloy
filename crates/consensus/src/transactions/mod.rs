@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use core::fmt::Display;
 
 use alloy_consensus::{
     Sealed, Signed, TransactionEnvelope, TxEip1559, TxEip2930, TxEip7702, TxLegacy,
@@ -153,7 +153,7 @@ impl From<Signed<TxEip7702>> for ArbTxEnvelope {
 }
 
 impl Display for ArbTxType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Legacy => write!(f, "Legacy"),
             Self::Eip2930 => write!(f, "EIP-2930"),
