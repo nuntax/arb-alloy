@@ -109,7 +109,7 @@ fn nitro_hash_vectors_arbitrum_types() {
     );
 
     let internal = ArbitrumInternalTx::new(
-        42161u64.into(),
+        42161u64,
         Bytes::from(vec![0x11, 0x22, 0x33, 0x44, 0x55]),
     );
     assert_eq!(

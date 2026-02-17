@@ -453,8 +453,8 @@ mod tests {
         let mut buf = &encoded[..];
         println!(
             "Buffer: {:?}, length: {}",
-            hex::encode(&buf),
-            hex::encode(&buf).len()
+            hex::encode(buf),
+            hex::encode(buf).len()
         );
         let from = address!("0x8789dfc2406ac2d60f174813e8a79f2b69862566");
         let l1_base_fee = U256::from(335396856);

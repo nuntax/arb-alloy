@@ -137,9 +137,7 @@ mod tests {
 
     #[test]
     fn parent_l1_block_number_fallback_for_legacy_headers() {
-        let mut header = Header::default();
-        header.number = 1234;
-        header.extra_data = Bytes::new();
+        let header = Header { number: 1234, extra_data: Bytes::new(), ..Default::default() };
         assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header), 1234);
     }
 
@@ -152,9 +150,7 @@ mod tests {
             arbos_format_version: 50,
         };
 
-        let mut header = Header::default();
-        header.number = 7777;
-        header.extra_data = info.encode_extra_data();
+        let header = Header { number: 7777, extra_data: info.encode_extra_data(), ..Default::default() };
 
         assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header), 8_888_888);
     }

@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use crate::transactions::internal::ArbitrumInternalTx;
 use crate::transactions::util::decode;
 use alloy_core::sol;

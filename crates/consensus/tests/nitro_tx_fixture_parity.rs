@@ -1,3 +1,5 @@
+#![allow(missing_docs)]
+
 use alloy_consensus::{Transaction, Typed2718};
 use alloy_eips::{Decodable2718, Encodable2718};
 use alloy_primitives::{Address, Bytes, TxKind, U256, hex};
