@@ -62,6 +62,7 @@ alloy-network = { version = "1.6.3", default-features = false }
 alloy-network-primitives = { version = "1.6.3", default-features = false }
 alloy-rpc-types-eth = { version = "1.6.3", default-features = false }
 alloy-provider = { version = "1.6.3", default-features = false }
+alloy-signer = { version = "1.6.3", default-features = false }
 alloy-transport = { version = "1.6.3", default-features = false }
 
 # External alloy-core / primitives
