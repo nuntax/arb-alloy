@@ -32,6 +32,9 @@ pub enum ArbHeaderDecodeError {
         /// Number of bytes present in `extra_data`.
         got: usize,
     },
+    /// The header decoded successfully but `arbos_format_version` is 0,
+    /// meaning this is not an Arbitrum header.
+    NotArbitrum,
 }
 
 impl fmt::Display for ArbHeaderDecodeError {
@@ -42,6 +45,9 @@ impl fmt::Display for ArbHeaderDecodeError {
                     f,
                     "invalid Arbitrum header extraData length: got {got}, expected {ARB_HEADER_EXTRA_DATA_LEN}"
                 )
+            }
+            Self::NotArbitrum => {
+                write!(f, "header has arbos_format_version 0, not an Arbitrum header")
             }
         }
     }
@@ -97,15 +103,16 @@ impl ArbHeaderInfo {
         Bytes::copy_from_slice(&out)
     }
 
-    /// Returns the L1 block number for a parent header, matching Nitro behavior.
+    /// Returns the L1 block number from an Arbitrum header.
     ///
-    /// If `extra_data` does not decode or has `arbos_format_version == 0`,
-    /// this falls back to the header's L2 block number.
-    pub fn parent_l1_block_number(header: &Header) -> u64 {
-        match Self::decode_header(header) {
-            Ok(info) if info.is_arbitrum() => info.l1_block_number,
-            _ => header.number,
+    /// Returns an error if `extra_data` does not decode or if the header
+    /// has `arbos_format_version == 0` (not an Arbitrum header).
+    pub fn parent_l1_block_number(header: &Header) -> Result<u64, ArbHeaderDecodeError> {
+        let info = Self::decode_header(header)?;
+        if !info.is_arbitrum() {
+            return Err(ArbHeaderDecodeError::NotArbitrum);
         }
+        Ok(info.l1_block_number)
     }
 }
 
@@ -135,9 +142,21 @@ mod tests {
     }
 
     #[test]
-    fn parent_l1_block_number_fallback_for_legacy_headers() {
+    fn parent_l1_block_number_errors_for_legacy_headers() {
         let header = Header { number: 1234, extra_data: Bytes::new(), ..Default::default() };
-        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header), 1234);
+        assert!(ArbHeaderInfo::parent_l1_block_number(&header).is_err());
+    }
+
+    #[test]
+    fn parent_l1_block_number_errors_for_non_arbitrum() {
+        let info = ArbHeaderInfo {
+            send_root: B256::from([0xAA; 32]),
+            send_count: 1,
+            l1_block_number: 8_888_888,
+            arbos_format_version: 0,
+        };
+        let header = Header { number: 7777, extra_data: info.encode_extra_data(), ..Default::default() };
+        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header).unwrap_err(), ArbHeaderDecodeError::NotArbitrum);
     }
 
     #[test]
@@ -151,6 +170,6 @@ mod tests {
 
         let header = Header { number: 7777, extra_data: info.encode_extra_data(), ..Default::default() };
 
-        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header), 8_888_888);
+        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header).unwrap(), 8_888_888);
     }
 }
