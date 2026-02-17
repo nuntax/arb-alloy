@@ -56,7 +56,7 @@ impl SubmitRetryableTx {
         address!("0x000000000000000000000000000000000000006e");
 
     /// Returns the L1 sender that created the retryable ticket.
-    pub fn from(&self) -> Address {
+    pub const fn from(&self) -> Address {
         self.from
     }
 

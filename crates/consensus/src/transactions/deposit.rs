@@ -47,7 +47,7 @@ pub struct TxDeposit {
 
 impl TxDeposit {
     /// Returns the sender/depositor address.
-    pub fn from(&self) -> Address {
+    pub const fn from(&self) -> Address {
         self.from
     }
 

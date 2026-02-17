@@ -11,7 +11,9 @@ mod arb_statistics;
 mod arb_sys;
 mod arb_wasm;
 mod arb_wasm_cache;
+#[allow(clippy::too_many_arguments)]
 mod arbos_acts;
+#[allow(clippy::too_many_arguments)]
 mod node_interface;
 
 pub use arb_address_table::ArbAddressTable;

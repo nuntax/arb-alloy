@@ -49,7 +49,7 @@ impl Network for Arbitrum {
     type BlockResponse = Block<Self::TransactionResponse, Self::HeaderResponse>;
 }
 
-fn arb_tx_type_from_eth(ty: TxType) -> Option<ArbTxType> {
+const fn arb_tx_type_from_eth(ty: TxType) -> Option<ArbTxType> {
     match ty {
         TxType::Legacy => Some(ArbTxType::Legacy),
         TxType::Eip2930 => Some(ArbTxType::Eip2930),
@@ -245,7 +245,7 @@ impl TransactionBuilder<Arbitrum> for ArbTransactionRequest {
 
         let typed = self
             .inner
-            .clone()
+            
             .build_typed_tx()
             .expect("checked by missing_keys");
         let mapped = match typed {

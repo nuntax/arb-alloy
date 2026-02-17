@@ -72,99 +72,99 @@ impl ArbTxEnvelope {
     /// Returns the transaction type.
     pub fn hash(&self) -> TxHash {
         match self {
-            ArbTxEnvelope::Legacy(tx) => *tx.hash(),
-            ArbTxEnvelope::Eip2930(tx) => *tx.hash(),
-            ArbTxEnvelope::Eip1559(tx) => *tx.hash(),
-            ArbTxEnvelope::Eip7702(tx) => *tx.hash(),
-            ArbTxEnvelope::SubmitRetryableTx(tx) => tx.hash(),
-            ArbTxEnvelope::DepositTx(tx) => tx.hash(),
-            ArbTxEnvelope::Unsigned(tx) => tx.hash(),
-            ArbTxEnvelope::Contract(tx) => tx.hash(),
-            ArbTxEnvelope::Retry(tx) => tx.hash(),
-            ArbTxEnvelope::ArbitrumInternal(tx) => tx.hash(),
+            Self::Legacy(tx) => *tx.hash(),
+            Self::Eip2930(tx) => *tx.hash(),
+            Self::Eip1559(tx) => *tx.hash(),
+            Self::Eip7702(tx) => *tx.hash(),
+            Self::SubmitRetryableTx(tx) => tx.hash(),
+            Self::DepositTx(tx) => tx.hash(),
+            Self::Unsigned(tx) => tx.hash(),
+            Self::Contract(tx) => tx.hash(),
+            Self::Retry(tx) => tx.hash(),
+            Self::ArbitrumInternal(tx) => tx.hash(),
         }
     }
     /// Recover the sender address.
     pub fn sender(&self) -> Result<Address, alloy_primitives::SignatureError> {
         match self {
-            ArbTxEnvelope::Legacy(tx) => tx.recover_signer(),
-            ArbTxEnvelope::Eip2930(tx) => tx.recover_signer(),
-            ArbTxEnvelope::Eip1559(tx) => tx.recover_signer(),
-            ArbTxEnvelope::Eip7702(tx) => tx.recover_signer(),
-            ArbTxEnvelope::SubmitRetryableTx(tx) => Ok(tx.from()),
-            ArbTxEnvelope::DepositTx(tx) => Ok(tx.from()),
-            ArbTxEnvelope::Unsigned(tx) => Ok(tx.from()),
-            ArbTxEnvelope::Contract(tx) => Ok(tx.from()),
-            ArbTxEnvelope::Retry(tx) => Ok(tx.from()),
-            ArbTxEnvelope::ArbitrumInternal(tx) => Ok(tx.from()),
+            Self::Legacy(tx) => tx.recover_signer(),
+            Self::Eip2930(tx) => tx.recover_signer(),
+            Self::Eip1559(tx) => tx.recover_signer(),
+            Self::Eip7702(tx) => tx.recover_signer(),
+            Self::SubmitRetryableTx(tx) => Ok(tx.from()),
+            Self::DepositTx(tx) => Ok(tx.from()),
+            Self::Unsigned(tx) => Ok(tx.from()),
+            Self::Contract(tx) => Ok(tx.from()),
+            Self::Retry(tx) => Ok(tx.from()),
+            Self::ArbitrumInternal(tx) => Ok(tx.from()),
         }
     }
 }
 
 impl From<ArbitrumInternalTx> for ArbTxEnvelope {
     fn from(tx: ArbitrumInternalTx) -> Self {
-        ArbTxEnvelope::ArbitrumInternal(tx.seal_slow())
+        Self::ArbitrumInternal(tx.seal_slow())
     }
 }
 impl From<TxDeposit> for ArbTxEnvelope {
     fn from(tx: TxDeposit) -> Self {
-        ArbTxEnvelope::DepositTx(tx.seal_slow())
+        Self::DepositTx(tx.seal_slow())
     }
 }
 impl From<SubmitRetryableTx> for ArbTxEnvelope {
     fn from(tx: SubmitRetryableTx) -> Self {
-        ArbTxEnvelope::SubmitRetryableTx(tx.seal_slow())
+        Self::SubmitRetryableTx(tx.seal_slow())
     }
 }
 impl From<TxUnsigned> for ArbTxEnvelope {
     fn from(tx: TxUnsigned) -> Self {
-        ArbTxEnvelope::Unsigned(tx.seal_slow())
+        Self::Unsigned(tx.seal_slow())
     }
 }
 impl From<TxContract> for ArbTxEnvelope {
     fn from(tx: TxContract) -> Self {
-        ArbTxEnvelope::Contract(tx.seal_slow())
+        Self::Contract(tx.seal_slow())
     }
 }
 impl From<TxRetry> for ArbTxEnvelope {
     fn from(tx: TxRetry) -> Self {
-        ArbTxEnvelope::Retry(tx.seal_slow())
+        Self::Retry(tx.seal_slow())
     }
 }
 impl From<Signed<TxLegacy>> for ArbTxEnvelope {
     fn from(tx: Signed<TxLegacy>) -> Self {
-        ArbTxEnvelope::Legacy(tx)
+        Self::Legacy(tx)
     }
 }
 impl From<Signed<TxEip2930>> for ArbTxEnvelope {
     fn from(tx: Signed<TxEip2930>) -> Self {
-        ArbTxEnvelope::Eip2930(tx)
+        Self::Eip2930(tx)
     }
 }
 impl From<Signed<TxEip1559>> for ArbTxEnvelope {
     fn from(tx: Signed<TxEip1559>) -> Self {
-        ArbTxEnvelope::Eip1559(tx)
+        Self::Eip1559(tx)
     }
 }
 impl From<Signed<TxEip7702>> for ArbTxEnvelope {
     fn from(tx: Signed<TxEip7702>) -> Self {
-        ArbTxEnvelope::Eip7702(tx)
+        Self::Eip7702(tx)
     }
 }
 
 impl Display for ArbTxType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ArbTxType::Legacy => write!(f, "Legacy"),
-            ArbTxType::Eip2930 => write!(f, "EIP-2930"),
-            ArbTxType::Eip1559 => write!(f, "EIP-1559"),
-            ArbTxType::Eip7702 => write!(f, "EIP-7702"),
-            ArbTxType::DepositTx => write!(f, "DepositTx"),
-            ArbTxType::SubmitRetryableTx => write!(f, "SubmitRetryableTx"),
-            ArbTxType::Unsigned => write!(f, "Unsigned"),
-            ArbTxType::Contract => write!(f, "Contract"),
-            ArbTxType::Retry => write!(f, "Retry"),
-            ArbTxType::ArbitrumInternal => write!(f, "ArbitrumInternal"),
+            Self::Legacy => write!(f, "Legacy"),
+            Self::Eip2930 => write!(f, "EIP-2930"),
+            Self::Eip1559 => write!(f, "EIP-1559"),
+            Self::Eip7702 => write!(f, "EIP-7702"),
+            Self::DepositTx => write!(f, "DepositTx"),
+            Self::SubmitRetryableTx => write!(f, "SubmitRetryableTx"),
+            Self::Unsigned => write!(f, "Unsigned"),
+            Self::Contract => write!(f, "Contract"),
+            Self::Retry => write!(f, "Retry"),
+            Self::ArbitrumInternal => write!(f, "ArbitrumInternal"),
         }
     }
 }

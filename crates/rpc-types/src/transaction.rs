@@ -162,7 +162,7 @@ mod tx_serde {
         other: OptionalFields,
     }
 
-    fn inner_contains_from(inner: &ArbTxEnvelope) -> bool {
+    const fn inner_contains_from(inner: &ArbTxEnvelope) -> bool {
         matches!(
             inner,
             ArbTxEnvelope::DepositTx(_)
@@ -231,7 +231,7 @@ mod tx_serde {
 
             let effective_gas_price = other.effective_gas_price.or(inner.gas_price());
 
-            Ok(ArbTransaction {
+            Ok(Self {
                 inner: alloy_rpc_types_eth::Transaction {
                     inner: Recovered::new_unchecked(inner, from),
                     block_hash,

@@ -5,7 +5,6 @@ use alloy_core::sol_types::SolCall;
 use alloy_primitives::{Address, Bytes, ChainId, FixedBytes, U256};
 use arb_sequencer_network::sequencer::feed::BatchDataStats;
 use serde::{Deserialize, Serialize};
-
 sol! {
    #[sol(rpc)]
    "./src/interfaces/ArbosActs.sol"
@@ -68,7 +67,7 @@ pub struct BatchPostingReportFields {
     pub data_hash: FixedBytes<32>,
 }
 
-fn get_legacy_costs_from_batch_stats(stats: &BatchDataStats) -> u64 {
+const fn get_legacy_costs_from_batch_stats(stats: &BatchDataStats) -> u64 {
     let mut gas = 4 * (stats.length - stats.non_zeros) + 16 * stats.non_zeros;
     let keccak_words = words_for_bytes(stats.length);
     gas += 30 + (keccak_words * 6);
@@ -76,7 +75,7 @@ fn get_legacy_costs_from_batch_stats(stats: &BatchDataStats) -> u64 {
     gas
 }
 
-fn words_for_bytes(nbytes: u64) -> u64 {
+const fn words_for_bytes(nbytes: u64) -> u64 {
     nbytes.div_ceil(32)
 }
 

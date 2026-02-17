@@ -71,7 +71,7 @@ impl<T: Decodable> RlpDecodableReceipt for ArbReceipt<T> {
             logs_bloom,
         } = <Receipt<T> as RlpDecodableReceipt>::rlp_decode_with_bloom(buf)?;
         Ok(ReceiptWithBloom {
-            receipt: ArbReceipt::new(receipt),
+            receipt: Self::new(receipt),
             logs_bloom,
         })
     }
@@ -120,7 +120,7 @@ pub enum ArbReceiptEnvelope<T = Log> {
 }
 
 impl<T> ArbReceiptEnvelope<T> {
-    fn as_receipt_with_bloom(&self) -> &ReceiptWithBloom<ArbReceipt<T>> {
+    const fn as_receipt_with_bloom(&self) -> &ReceiptWithBloom<ArbReceipt<T>> {
         match self {
             Self::Legacy(r)
             | Self::Eip2930(r)

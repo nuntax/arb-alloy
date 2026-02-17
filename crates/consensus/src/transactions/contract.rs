@@ -45,7 +45,7 @@ pub struct TxContract {
 
 impl TxContract {
     /// Returns the sender address.
-    pub fn from(&self) -> Address {
+    pub const fn from(&self) -> Address {
         self.from
     }
 

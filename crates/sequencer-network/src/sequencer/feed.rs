@@ -117,7 +117,7 @@ impl L1Header {
         };
         let base_fee_l1_u64 = header.base_fee_l1.as_u64();
         let base_fee_l1 = base_fee_l1_u64.map(|x| U256::from(x));
-        Ok(L1Header {
+        Ok(Self {
             kind: header.kind,
             block_number: header.block_number,
             timestamp: header.timestamp,
@@ -156,34 +156,34 @@ pub enum MessageType {
 }
 impl MessageType {
     /// Converts a raw numeric kind into a typed enum variant.
-    pub fn from_u8(value: u8) -> Self {
+    pub const fn from_u8(value: u8) -> Self {
         match value {
-            3 => MessageType::L2Message,
-            6 => MessageType::EndOfBlock,
-            7 => MessageType::L2FundedByL1,
-            8 => MessageType::RollupEvent,
-            9 => MessageType::SubmitRetryable,
-            10 => MessageType::BatchForGasEstimation,
-            11 => MessageType::Initialize,
-            12 => MessageType::EthDeposit,
-            13 => MessageType::BatchPostingReport,
-            _ => MessageType::Invalid,
+            3 => Self::L2Message,
+            6 => Self::EndOfBlock,
+            7 => Self::L2FundedByL1,
+            8 => Self::RollupEvent,
+            9 => Self::SubmitRetryable,
+            10 => Self::BatchForGasEstimation,
+            11 => Self::Initialize,
+            12 => Self::EthDeposit,
+            13 => Self::BatchPostingReport,
+            _ => Self::Invalid,
         }
     }
     #[allow(dead_code)]
     /// Returns the canonical numeric discriminator for this message type.
-    pub fn to_u8(&self) -> u8 {
+    pub const fn to_u8(&self) -> u8 {
         match self {
-            MessageType::L2Message => 3,
-            MessageType::EndOfBlock => 6,
-            MessageType::L2FundedByL1 => 7,
-            MessageType::RollupEvent => 8,
-            MessageType::SubmitRetryable => 9,
-            MessageType::BatchForGasEstimation => 10,
-            MessageType::Initialize => 11,
-            MessageType::EthDeposit => 12,
-            MessageType::BatchPostingReport => 13,
-            MessageType::Invalid => 0xFF,
+            Self::L2Message => 3,
+            Self::EndOfBlock => 6,
+            Self::L2FundedByL1 => 7,
+            Self::RollupEvent => 8,
+            Self::SubmitRetryable => 9,
+            Self::BatchForGasEstimation => 10,
+            Self::Initialize => 11,
+            Self::EthDeposit => 12,
+            Self::BatchPostingReport => 13,
+            Self::Invalid => 0xFF,
         }
     }
 }

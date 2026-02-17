@@ -40,7 +40,7 @@ impl ArbitrumInternalTx {
     pub const ARBOS_ADDRESS: Address = address!("0x00000000000000000000000000000000000a4b05");
 
     /// Creates a new internal transaction.
-    pub fn new(chain_id: ChainId, data: Bytes) -> Self {
+    pub const fn new(chain_id: ChainId, data: Bytes) -> Self {
         Self {
             chain_id,
             data,
@@ -49,7 +49,7 @@ impl ArbitrumInternalTx {
     }
 
     /// Returns the canonical internal transaction sender.
-    pub fn from(&self) -> Address {
+    pub const fn from(&self) -> Address {
         Self::ARBOS_ADDRESS
     }
 
