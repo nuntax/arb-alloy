@@ -105,12 +105,12 @@ impl L1Header {
     /// Converts the raw JSON header plus delayed count into a normalized header.
     pub fn from_header(header: &Header, delayed_messages_read: u64) -> Result<Self, String> {
         let poster = Address::from_str(&header.sender)
-            .map_err(|e| format!("failed to parse poster address: {}", e))?;
+            .map_err(|e| format!("failed to parse poster address: {e}"))?;
         let request_id_str = header.request_id.as_str();
         let request_id = match request_id_str {
             Some(s) => {
                 let bytes = <[u8; 32]>::from_hex(s.trim_start_matches("0x"))
-                    .map_err(|e| format!("failed to parse request_id hex string '{}': {}", s, e))?;
+                    .map_err(|e| format!("failed to parse request_id hex string '{s}': {e}"))?;
                 Some(FixedBytes::from(bytes))
             }
             None => None,
