@@ -1,0 +1,34 @@
+{
+  "vectors": [
+    {
+      "name": "header_basic",
+      "extra_data": "0x1111111111111111111111111111111111111111111111111111111111111111000000000000002a00000000000182b90000000000000020",
+      "expect": {
+        "send_root": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "send_count": 42,
+        "l1_block_number": 99001,
+        "arbos_format_version": 32
+      }
+    },
+    {
+      "name": "header_non_arbitrum",
+      "extra_data": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000001000000000087a2380000000000000000",
+      "expect": {
+        "send_root": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "send_count": 1,
+        "l1_block_number": 8888888,
+        "arbos_format_version": 0
+      }
+    },
+    {
+      "name": "header_large_values",
+      "extra_data": "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0000000000000032",
+      "expect": {
+        "send_root": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "send_count": 18446744073709551615,
+        "l1_block_number": 18446744073709551614,
+        "arbos_format_version": 50
+      }
+    }
+  ]
+}

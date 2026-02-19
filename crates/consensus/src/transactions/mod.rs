@@ -10,7 +10,7 @@ pub use retry::TxRetry;
 pub use unsigned::TxUnsigned;
 
 use crate::transactions::{internal::ArbInternalTx, submit_retryable::SubmitRetryableTx};
-/// Batch posting report decoder utilities.
+/// Batch posting report decoder utilities. Unused at the moment, remainder from sequencer reader.
 pub mod batchpostingreport;
 /// Arbitrum contract transaction type (`0x66`).
 pub mod contract;
