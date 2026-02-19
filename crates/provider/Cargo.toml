@@ -19,7 +19,7 @@ path = "src/lib.rs"
 [dependencies]
 alloy-network.workspace = true
 alloy-primitives.workspace = true
-alloy-provider = { workspace = true, features = ["reqwest", "reqwest-default-tls"] }
+alloy-provider.workspace = true
 alloy-transport.workspace = true
 alloy-rpc-types-eth.workspace = true
 arb-alloy-network.workspace = true
@@ -32,5 +32,13 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 
 [features]
 default = ["std"]
-std = []
-serde = []
+std = [
+    "alloy-provider/reqwest",
+    "alloy-provider/reqwest-default-tls",
+    "arb-alloy-network/std",
+    "arb-alloy-rpc-types/std",
+]
+serde = [
+    "arb-alloy-network/serde",
+    "arb-alloy-rpc-types/serde",
+]

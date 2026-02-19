@@ -28,8 +28,14 @@ arb-alloy-rpc-types.workspace = true
 
 [features]
 default = ["std"]
-std = []
-serde = []
+std = [
+    "arb-alloy-consensus/std",
+    "arb-alloy-rpc-types/std",
+]
+serde = [
+    "arb-alloy-consensus/serde",
+    "arb-alloy-rpc-types/serde",
+]
 
 [dev-dependencies]
 async-trait.workspace = true

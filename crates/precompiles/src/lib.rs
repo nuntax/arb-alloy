@@ -5,6 +5,7 @@
 )]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 /// Canonical addresses for all Arbitrum precompile contracts.
 pub mod addresses;

@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use alloy_network::Network;
 use alloy_primitives::TxHash;
 use alloy_provider::Provider;
@@ -45,10 +46,7 @@ pub trait ArbTraceProviderExt<N: Network = Arbitrum>: Send + Sync {
     ) -> TransportResult<serde_json::Value>;
 
     /// Get the trace of a transaction by hash.
-    async fn arbtrace_transaction(
-        &self,
-        tx_hash: TxHash,
-    ) -> TransportResult<serde_json::Value>;
+    async fn arbtrace_transaction(&self, tx_hash: TxHash) -> TransportResult<serde_json::Value>;
 
     /// Get a specific trace by transaction hash and index path.
     async fn arbtrace_get(
@@ -58,16 +56,10 @@ pub trait ArbTraceProviderExt<N: Network = Arbitrum>: Send + Sync {
     ) -> TransportResult<serde_json::Value>;
 
     /// Trace an entire block.
-    async fn arbtrace_block(
-        &self,
-        block: serde_json::Value,
-    ) -> TransportResult<serde_json::Value>;
+    async fn arbtrace_block(&self, block: serde_json::Value) -> TransportResult<serde_json::Value>;
 
     /// Filter traces matching the given criteria.
-    async fn arbtrace_filter(
-        &self,
-        filter: TraceFilter,
-    ) -> TransportResult<serde_json::Value>;
+    async fn arbtrace_filter(&self, filter: TraceFilter) -> TransportResult<serde_json::Value>;
 }
 
 #[cfg_attr(target_family = "wasm", async_trait::async_trait(?Send))]
@@ -118,10 +110,7 @@ where
             .await
     }
 
-    async fn arbtrace_transaction(
-        &self,
-        tx_hash: TxHash,
-    ) -> TransportResult<serde_json::Value> {
+    async fn arbtrace_transaction(&self, tx_hash: TxHash) -> TransportResult<serde_json::Value> {
         self.client()
             .request("arbtrace_transaction", (tx_hash,))
             .await
@@ -132,27 +121,15 @@ where
         tx_hash: TxHash,
         path: serde_json::Value,
     ) -> TransportResult<serde_json::Value> {
-        self.client()
-            .request("arbtrace_get", (tx_hash, path))
-            .await
+        self.client().request("arbtrace_get", (tx_hash, path)).await
     }
 
-    async fn arbtrace_block(
-        &self,
-        block: serde_json::Value,
-    ) -> TransportResult<serde_json::Value> {
-        self.client()
-            .request("arbtrace_block", (block,))
-            .await
+    async fn arbtrace_block(&self, block: serde_json::Value) -> TransportResult<serde_json::Value> {
+        self.client().request("arbtrace_block", (block,)).await
     }
 
-    async fn arbtrace_filter(
-        &self,
-        filter: TraceFilter,
-    ) -> TransportResult<serde_json::Value> {
-        self.client()
-            .request("arbtrace_filter", (filter,))
-            .await
+    async fn arbtrace_filter(&self, filter: TraceFilter) -> TransportResult<serde_json::Value> {
+        self.client().request("arbtrace_filter", (filter,)).await
     }
 }
 

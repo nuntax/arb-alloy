@@ -5,6 +5,9 @@
 )]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
+#[allow(unused_extern_crates)]
+extern crate alloc;
 
 /// Arbitrum sequencer feed protocol modules.
 pub mod sequencer;

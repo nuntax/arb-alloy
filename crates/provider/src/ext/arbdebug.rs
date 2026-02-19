@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use alloy_network::Network;
 use alloy_provider::Provider;
 use alloy_rpc_types_eth::BlockNumberOrTag;
@@ -95,10 +96,7 @@ mod tests {
             .arbdebug_pricing_model(BlockNumberOrTag::Earliest, BlockNumberOrTag::Latest)
             .await
             .unwrap_err();
-        assert!(
-            err.to_string().contains("arbdebug_pricingModel"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("arbdebug_pricingModel"), "{err}");
 
         let err = provider
             .arbdebug_timeout_queue_history(BlockNumberOrTag::Earliest, BlockNumberOrTag::Latest)
@@ -113,9 +111,6 @@ mod tests {
             .arbdebug_timeout_queue(BlockNumberOrTag::Latest)
             .await
             .unwrap_err();
-        assert!(
-            err.to_string().contains("arbdebug_timeoutQueue"),
-            "{err}"
-        );
+        assert!(err.to_string().contains("arbdebug_timeoutQueue"), "{err}");
     }
 }

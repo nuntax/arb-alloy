@@ -5,6 +5,9 @@
 )]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
 
 /// `arbdebug_*` namespace types.
 pub mod arbdebug;
@@ -26,6 +29,7 @@ pub use request::ArbTransactionRequest;
 pub use timeboost::JsonExpressLaneSubmission;
 pub use transaction::ArbTransaction;
 
+use alloc::string::String;
 use alloy_primitives::Bytes;
 use serde::{Deserialize, Serialize};
 

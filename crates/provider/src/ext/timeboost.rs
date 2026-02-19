@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use alloy_network::Network;
 use alloy_provider::Provider;
 use alloy_transport::TransportResult;

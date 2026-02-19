@@ -47,7 +47,10 @@ impl fmt::Display for ArbHeaderDecodeError {
                 )
             }
             Self::NotArbitrum => {
-                write!(f, "header has arbos_format_version 0, not an Arbitrum header")
+                write!(
+                    f,
+                    "header has arbos_format_version 0, not an Arbitrum header"
+                )
             }
         }
     }
@@ -143,7 +146,11 @@ mod tests {
 
     #[test]
     fn parent_l1_block_number_errors_for_legacy_headers() {
-        let header = Header { number: 1234, extra_data: Bytes::new(), ..Default::default() };
+        let header = Header {
+            number: 1234,
+            extra_data: Bytes::new(),
+            ..Default::default()
+        };
         assert!(ArbHeaderInfo::parent_l1_block_number(&header).is_err());
     }
 
@@ -155,8 +162,15 @@ mod tests {
             l1_block_number: 8_888_888,
             arbos_format_version: 0,
         };
-        let header = Header { number: 7777, extra_data: info.encode_extra_data(), ..Default::default() };
-        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header).unwrap_err(), ArbHeaderDecodeError::NotArbitrum);
+        let header = Header {
+            number: 7777,
+            extra_data: info.encode_extra_data(),
+            ..Default::default()
+        };
+        assert_eq!(
+            ArbHeaderInfo::parent_l1_block_number(&header).unwrap_err(),
+            ArbHeaderDecodeError::NotArbitrum
+        );
     }
 
     #[test]
@@ -168,8 +182,15 @@ mod tests {
             arbos_format_version: 50,
         };
 
-        let header = Header { number: 7777, extra_data: info.encode_extra_data(), ..Default::default() };
+        let header = Header {
+            number: 7777,
+            extra_data: info.encode_extra_data(),
+            ..Default::default()
+        };
 
-        assert_eq!(ArbHeaderInfo::parent_l1_block_number(&header).unwrap(), 8_888_888);
+        assert_eq!(
+            ArbHeaderInfo::parent_l1_block_number(&header).unwrap(),
+            8_888_888
+        );
     }
 }

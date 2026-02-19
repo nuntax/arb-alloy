@@ -26,8 +26,9 @@ struct HeaderExpect {
 
 #[test]
 fn nitro_header_vectors_roundtrip_and_accessors() {
-    let file: FixtureFile = serde_json::from_str(include_str!("../testdata/nitro_header_fixtures.json"))
-        .expect("fixture JSON should deserialize");
+    let file: FixtureFile =
+        serde_json::from_str(include_str!("../testdata/nitro_header_fixtures.json"))
+            .expect("fixture JSON should deserialize");
 
     for fixture in file.vectors {
         let extra_data = parse_hex_bytes(&fixture.extra_data);
@@ -48,20 +49,17 @@ fn nitro_header_vectors_roundtrip_and_accessors() {
             fixture.name
         );
         assert_eq!(
-            decoded.send_count,
-            fixture.expect.send_count,
+            decoded.send_count, fixture.expect.send_count,
             "{}: send_count mismatch",
             fixture.name
         );
         assert_eq!(
-            decoded.l1_block_number,
-            fixture.expect.l1_block_number,
+            decoded.l1_block_number, fixture.expect.l1_block_number,
             "{}: l1_block_number mismatch",
             fixture.name
         );
         assert_eq!(
-            decoded.arbos_format_version,
-            fixture.expect.arbos_format_version,
+            decoded.arbos_format_version, fixture.expect.arbos_format_version,
             "{}: arbos_format_version mismatch",
             fixture.name
         );

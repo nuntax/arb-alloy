@@ -23,4 +23,7 @@ alloy-primitives.workspace = true
 
 [features]
 default = ["std"]
-std = []
+std = [
+    "alloy-core/std",
+    "alloy-primitives/std",
+]

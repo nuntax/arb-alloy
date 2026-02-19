@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use alloy_primitives::Address;
 use alloy_rpc_types_eth::BlockNumberOrTag;
 use serde::{Deserialize, Serialize};

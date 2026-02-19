@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use alloy_consensus::{
     Eip658Value, Receipt, ReceiptWithBloom, RlpDecodableReceipt, RlpEncodableReceipt, TxReceipt,
 };
@@ -10,7 +11,6 @@ use alloy_eips::{
 };
 use alloy_primitives::{Bloom, Log};
 use alloy_rlp::{BufMut, Decodable, Encodable};
-use alloc::vec::Vec;
 use core::fmt;
 
 /// Arbitrum receipt body.

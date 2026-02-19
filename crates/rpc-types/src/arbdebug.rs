@@ -1,3 +1,4 @@
+use alloc::{string::String, vec::Vec};
 use alloy_primitives::{B256, U256};
 use serde::{Deserialize, Serialize};
 

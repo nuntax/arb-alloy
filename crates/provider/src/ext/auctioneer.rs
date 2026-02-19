@@ -1,3 +1,4 @@
+use alloc::boxed::Box;
 use alloy_network::Network;
 use alloy_primitives::Bytes;
 use alloy_provider::Provider;
@@ -33,10 +34,7 @@ where
         raw_tx: Bytes,
     ) -> TransportResult<()> {
         self.client()
-            .request(
-                "auctioneer_submitAuctionResolutionTransaction",
-                (raw_tx,),
-            )
+            .request("auctioneer_submitAuctionResolutionTransaction", (raw_tx,))
             .await
     }
 }
@@ -54,9 +52,7 @@ mod tests {
         let provider = ProviderBuilder::new().connect_mocked_client(asserter.clone());
 
         let err = provider
-            .auctioneer_submit_auction_resolution_transaction(
-                alloy_primitives::Bytes::new(),
-            )
+            .auctioneer_submit_auction_resolution_transaction(alloy_primitives::Bytes::new())
             .await
             .unwrap_err();
         assert!(

@@ -29,5 +29,15 @@ serde_json.workspace = true
 
 [features]
 default = ["std"]
-std = []
+std = [
+    "alloy-consensus/std",
+    "alloy-eips/std",
+    "alloy-network-primitives/std",
+    "alloy-primitives/std",
+    "alloy-rpc-types-eth/std",
+    "alloy-serde/std",
+    "arb-alloy-consensus/std",
+    "serde/std",
+    "serde_json/std",
+]
 serde = []

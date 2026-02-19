@@ -1,4 +1,5 @@
-use std::str::FromStr;
+use alloc::{format, string::String, vec::Vec};
+use core::str::FromStr;
 
 use alloy_core::hex::FromHex;
 use alloy_primitives::{Address, FixedBytes, U256};

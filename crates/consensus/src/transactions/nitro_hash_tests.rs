@@ -104,10 +104,7 @@ fn nitro_hash_vectors_arbitrum_types() {
             .unwrap()
     );
 
-    let internal = ArbInternalTx::new(
-        42161u64,
-        Bytes::from(vec![0x11, 0x22, 0x33, 0x44, 0x55]),
-    );
+    let internal = ArbInternalTx::new(42161u64, Bytes::from(vec![0x11, 0x22, 0x33, 0x44, 0x55]));
     assert_eq!(
         internal.tx_hash(),
         TxHash::from_hex("0x5546c6af5de10e9bcaf1943ac8feddeb2ba2bb1f4252fddd69b16763fb454ab4",)

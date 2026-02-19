@@ -5,7 +5,11 @@
 )]
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
+use alloc::{vec, vec::Vec};
 use alloy_consensus::{Header as EthHeader, TxEnvelope, TxType, TypedTransaction};
 use alloy_network::{
     BuildResult, Ethereum, EthereumWallet, Network, NetworkWallet, TransactionBuilder,
@@ -372,7 +376,10 @@ mod tests {
     fn network_wallet_bridge_forwards_signer_metadata() {
         let (wallet, address) = make_wallet();
 
-        assert_eq!(NetworkWallet::<Arbitrum>::default_signer_address(&wallet), address);
+        assert_eq!(
+            NetworkWallet::<Arbitrum>::default_signer_address(&wallet),
+            address
+        );
         assert!(NetworkWallet::<Arbitrum>::has_signer_for(&wallet, &address));
 
         let addresses: Vec<_> = NetworkWallet::<Arbitrum>::signer_addresses(&wallet).collect();

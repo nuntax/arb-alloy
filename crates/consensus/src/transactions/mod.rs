@@ -87,10 +87,58 @@ impl ArbTxEnvelope {
     /// Recover the sender address.
     pub fn sender(&self) -> Result<Address, alloy_primitives::SignatureError> {
         match self {
-            Self::Legacy(tx) => tx.recover_signer(),
-            Self::Eip2930(tx) => tx.recover_signer(),
-            Self::Eip1559(tx) => tx.recover_signer(),
-            Self::Eip7702(tx) => tx.recover_signer(),
+            Self::Legacy(tx) => {
+                #[cfg(feature = "k256")]
+                {
+                    tx.recover_signer()
+                }
+                #[cfg(not(feature = "k256"))]
+                {
+                    let _ = tx;
+                    Err(alloy_primitives::SignatureError::FromBytes(
+                        "signer recovery requires the `k256` feature",
+                    ))
+                }
+            }
+            Self::Eip2930(tx) => {
+                #[cfg(feature = "k256")]
+                {
+                    tx.recover_signer()
+                }
+                #[cfg(not(feature = "k256"))]
+                {
+                    let _ = tx;
+                    Err(alloy_primitives::SignatureError::FromBytes(
+                        "signer recovery requires the `k256` feature",
+                    ))
+                }
+            }
+            Self::Eip1559(tx) => {
+                #[cfg(feature = "k256")]
+                {
+                    tx.recover_signer()
+                }
+                #[cfg(not(feature = "k256"))]
+                {
+                    let _ = tx;
+                    Err(alloy_primitives::SignatureError::FromBytes(
+                        "signer recovery requires the `k256` feature",
+                    ))
+                }
+            }
+            Self::Eip7702(tx) => {
+                #[cfg(feature = "k256")]
+                {
+                    tx.recover_signer()
+                }
+                #[cfg(not(feature = "k256"))]
+                {
+                    let _ = tx;
+                    Err(alloy_primitives::SignatureError::FromBytes(
+                        "signer recovery requires the `k256` feature",
+                    ))
+                }
+            }
             Self::SubmitRetryable(tx) => Ok(tx.from()),
             Self::Deposit(tx) => Ok(tx.from()),
             Self::Unsigned(tx) => Ok(tx.from()),
