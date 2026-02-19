@@ -325,7 +325,7 @@ mod tests {
     use alloy_consensus::{SignableTransaction, TxEip1559, TxEip2930, TxEip7702, TxLegacy};
     use alloy_network::TxSigner;
     use alloy_primitives::Signature;
-    use arb_alloy_consensus::transactions::internal::ArbitrumInternalTx;
+    use arb_alloy_consensus::transactions::internal::ArbInternalTx;
     use std::future::Future;
     use std::task::{Context, Poll, Waker};
 
@@ -423,7 +423,7 @@ mod tests {
         let err = block_on(NetworkWallet::<Arbitrum>::sign_transaction_from(
             &wallet,
             sender,
-            ArbTypedTransaction::ArbitrumInternal(ArbitrumInternalTx::new(42161, Bytes::new())),
+            ArbTypedTransaction::Internal(ArbInternalTx::new(42161, Bytes::new())),
         ))
         .expect_err("custom Arbitrum tx signing should fail");
 

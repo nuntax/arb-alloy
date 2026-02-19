@@ -40,10 +40,10 @@ impl From<arb_alloy_consensus::ArbTypedTransaction> for ArbTransactionRequest {
             arb_alloy_consensus::ArbTypedTransaction::Eip7702(tx) => {
                 alloy_rpc_types_eth::TransactionRequest::from_transaction(tx)
             }
-            arb_alloy_consensus::ArbTypedTransaction::DepositTx(tx) => {
+            arb_alloy_consensus::ArbTypedTransaction::Deposit(tx) => {
                 alloy_rpc_types_eth::TransactionRequest::from_transaction(tx)
             }
-            arb_alloy_consensus::ArbTypedTransaction::SubmitRetryableTx(tx) => {
+            arb_alloy_consensus::ArbTypedTransaction::SubmitRetryable(tx) => {
                 alloy_rpc_types_eth::TransactionRequest::from_transaction(tx)
             }
             arb_alloy_consensus::ArbTypedTransaction::Unsigned(tx) => {
@@ -55,7 +55,7 @@ impl From<arb_alloy_consensus::ArbTypedTransaction> for ArbTransactionRequest {
             arb_alloy_consensus::ArbTypedTransaction::Retry(tx) => {
                 alloy_rpc_types_eth::TransactionRequest::from_transaction(tx)
             }
-            arb_alloy_consensus::ArbTypedTransaction::ArbitrumInternal(tx) => {
+            arb_alloy_consensus::ArbTypedTransaction::Internal(tx) => {
                 alloy_rpc_types_eth::TransactionRequest::from_transaction(tx)
             }
         };

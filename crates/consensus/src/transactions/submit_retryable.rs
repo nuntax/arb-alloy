@@ -293,7 +293,7 @@ impl Decodable for SubmitRetryableTx {
 
 impl Decodable2718 for SubmitRetryableTx {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> Eip2718Result<Self> {
-        if ty != ArbTxType::SubmitRetryableTx as u8 {
+        if ty != ArbTxType::SubmitRetryable as u8 {
             return Err(Eip2718Error::UnexpectedType(ty));
         }
         let tx = Self::rlp_decode(buf)?;
@@ -381,7 +381,7 @@ impl Transaction for SubmitRetryableTx {
 
 impl Typed2718 for SubmitRetryableTx {
     fn ty(&self) -> u8 {
-        ArbTxType::SubmitRetryableTx as u8
+        ArbTxType::SubmitRetryable as u8
     }
 }
 

@@ -165,8 +165,8 @@ mod tx_serde {
     const fn inner_contains_from(inner: &ArbTxEnvelope) -> bool {
         matches!(
             inner,
-            ArbTxEnvelope::DepositTx(_)
-                | ArbTxEnvelope::SubmitRetryableTx(_)
+            ArbTxEnvelope::Deposit(_)
+                | ArbTxEnvelope::SubmitRetryable(_)
                 | ArbTxEnvelope::Unsigned(_)
                 | ArbTxEnvelope::Contract(_)
                 | ArbTxEnvelope::Retry(_)

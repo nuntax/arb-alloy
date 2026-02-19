@@ -130,7 +130,7 @@ impl TxDeposit {
 impl Typed2718 for TxDeposit {
     #[doc = " Returns the EIP-2718 type flag."]
     fn ty(&self) -> u8 {
-        ArbTxType::DepositTx as u8
+        ArbTxType::Deposit as u8
     }
 }
 impl Decodable for TxDeposit {
@@ -140,7 +140,7 @@ impl Decodable for TxDeposit {
 }
 impl Decodable2718 for TxDeposit {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> Eip2718Result<Self> {
-        if ty != ArbTxType::DepositTx as u8 {
+        if ty != ArbTxType::Deposit as u8 {
             return Err(Eip2718Error::UnexpectedType(ty));
         }
         let tx = Self::rlp_decode(buf)?;

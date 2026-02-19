@@ -219,7 +219,7 @@ async fn arb_known_tx_receipts_decode_by_type() -> Result<(), Box<dyn std::error
     assert_tx_and_receipt_kind(
         &provider,
         b256!("ba468eff535d02c61cc4dba52987287e5412c23fea8dd5ea63ba91f3a18b24b4"),
-        |tx| matches!(tx, ArbTxEnvelope::SubmitRetryableTx(_)),
+        |tx| matches!(tx, ArbTxEnvelope::SubmitRetryable(_)),
         |receipt| matches!(receipt, ArbReceiptEnvelope::SubmitRetryable(_)),
     )
     .await?;
@@ -228,7 +228,7 @@ async fn arb_known_tx_receipts_decode_by_type() -> Result<(), Box<dyn std::error
     assert_tx_and_receipt_kind(
         &provider,
         b256!("982d30564efe4ceec675a09c72637d1f9490558131f31d4c37c9c4c8e08d7724"),
-        |tx| matches!(tx, ArbTxEnvelope::DepositTx(_)),
+        |tx| matches!(tx, ArbTxEnvelope::Deposit(_)),
         |receipt| matches!(receipt, ArbReceiptEnvelope::Deposit(_)),
     )
     .await?;
@@ -237,7 +237,7 @@ async fn arb_known_tx_receipts_decode_by_type() -> Result<(), Box<dyn std::error
     assert_tx_and_receipt_kind(
         &provider,
         b256!("51f2698bcf39d55c0d2a9c49d9192980c5b2c0cc1a2f935d0a8f79df3885a43b"),
-        |tx| matches!(tx, ArbTxEnvelope::ArbitrumInternal(_)),
+        |tx| matches!(tx, ArbTxEnvelope::Internal(_)),
         |receipt| matches!(receipt, ArbReceiptEnvelope::Internal(_)),
     )
     .await?;

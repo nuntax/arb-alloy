@@ -4,7 +4,7 @@ alloy_core::sol! {
     /// These methods are only callable by ArbOS itself (address 0xA4B05).
     /// They are used internally by the sequencer to mark block boundaries
     /// and report batch posting costs. Exposed here for calldata decoding
-    /// of `ArbitrumInternalTx` payloads.
+    /// of `ArbInternalTx` payloads.
     ///
     /// Nitro reference: `nitro/precompiles/ArbosActs.go`.
     #[sol(rpc)]

@@ -1,6 +1,6 @@
 #![allow(clippy::too_many_arguments)]
 
-use crate::transactions::internal::ArbitrumInternalTx;
+use crate::transactions::internal::ArbInternalTx;
 use crate::transactions::util::decode;
 use alloy_core::sol;
 use alloy_core::sol_types::SolCall;
@@ -89,7 +89,7 @@ pub fn decode_fields_sequencer(
     arbos_version: u64,
     batch_data_stats: Option<BatchDataStats>,
     legacy_batch_gas: Option<u64>,
-) -> alloy_rlp::Result<ArbitrumInternalTx> {
+) -> alloy_rlp::Result<ArbInternalTx> {
     let batch_timestamp: U256 = decode(buf)?;
     let batch_poster: Address = decode(buf)?;
     let _data_hash: FixedBytes<32> = decode(buf)?;
@@ -139,5 +139,5 @@ pub fn decode_fields_sequencer(
         )
     };
 
-    Ok(ArbitrumInternalTx::new(chain_id, data))
+    Ok(ArbInternalTx::new(chain_id, data))
 }

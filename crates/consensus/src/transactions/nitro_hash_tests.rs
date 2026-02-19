@@ -1,7 +1,7 @@
 use alloy_primitives::hex::FromHex;
 use alloy_primitives::{B256, Bytes, FixedBytes, TxHash, U256, address};
 
-use super::{ArbitrumInternalTx, SubmitRetryableTx, TxContract, TxDeposit, TxRetry, TxUnsigned};
+use super::{ArbInternalTx, SubmitRetryableTx, TxContract, TxDeposit, TxRetry, TxUnsigned};
 use alloy_primitives::TxKind;
 
 #[test]
@@ -104,7 +104,7 @@ fn nitro_hash_vectors_arbitrum_types() {
             .unwrap()
     );
 
-    let internal = ArbitrumInternalTx::new(
+    let internal = ArbInternalTx::new(
         42161u64,
         Bytes::from(vec![0x11, 0x22, 0x33, 0x44, 0x55]),
     );

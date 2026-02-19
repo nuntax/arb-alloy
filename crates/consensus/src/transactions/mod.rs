@@ -9,7 +9,7 @@ pub use deposit::TxDeposit;
 pub use retry::TxRetry;
 pub use unsigned::TxUnsigned;
 
-use crate::transactions::{internal::ArbitrumInternalTx, submit_retryable::SubmitRetryableTx};
+use crate::transactions::{internal::ArbInternalTx, submit_retryable::SubmitRetryableTx};
 /// Batch posting report decoder utilities.
 pub mod batchpostingreport;
 /// Arbitrum contract transaction type (`0x66`).
@@ -50,10 +50,10 @@ pub enum ArbTxEnvelope {
     Eip7702(Signed<TxEip7702>),
     /// Arbitrum deposit transaction.
     #[envelope(ty = 0x64)]
-    DepositTx(Sealed<TxDeposit>),
+    Deposit(Sealed<TxDeposit>),
     /// Arbitrum submit-retryable transaction.
     #[envelope(ty = 0x69)]
-    SubmitRetryableTx(Sealed<SubmitRetryableTx>),
+    SubmitRetryable(Sealed<SubmitRetryableTx>),
     /// Arbitrum unsigned user transaction.
     #[envelope(ty = 0x65)]
     Unsigned(Sealed<TxUnsigned>),
@@ -65,23 +65,23 @@ pub enum ArbTxEnvelope {
     Retry(Sealed<TxRetry>),
     /// Arbitrum internal system transaction.
     #[envelope(ty = 0x6a)]
-    ArbitrumInternal(Sealed<ArbitrumInternalTx>),
+    Internal(Sealed<ArbInternalTx>),
 }
 
 impl ArbTxEnvelope {
-    /// Returns the transaction type.
+    /// Returns the transaction hash.
     pub fn hash(&self) -> TxHash {
         match self {
             Self::Legacy(tx) => *tx.hash(),
             Self::Eip2930(tx) => *tx.hash(),
             Self::Eip1559(tx) => *tx.hash(),
             Self::Eip7702(tx) => *tx.hash(),
-            Self::SubmitRetryableTx(tx) => tx.hash(),
-            Self::DepositTx(tx) => tx.hash(),
+            Self::SubmitRetryable(tx) => tx.hash(),
+            Self::Deposit(tx) => tx.hash(),
             Self::Unsigned(tx) => tx.hash(),
             Self::Contract(tx) => tx.hash(),
             Self::Retry(tx) => tx.hash(),
-            Self::ArbitrumInternal(tx) => tx.hash(),
+            Self::Internal(tx) => tx.hash(),
         }
     }
     /// Recover the sender address.
@@ -91,29 +91,29 @@ impl ArbTxEnvelope {
             Self::Eip2930(tx) => tx.recover_signer(),
             Self::Eip1559(tx) => tx.recover_signer(),
             Self::Eip7702(tx) => tx.recover_signer(),
-            Self::SubmitRetryableTx(tx) => Ok(tx.from()),
-            Self::DepositTx(tx) => Ok(tx.from()),
+            Self::SubmitRetryable(tx) => Ok(tx.from()),
+            Self::Deposit(tx) => Ok(tx.from()),
             Self::Unsigned(tx) => Ok(tx.from()),
             Self::Contract(tx) => Ok(tx.from()),
             Self::Retry(tx) => Ok(tx.from()),
-            Self::ArbitrumInternal(tx) => Ok(tx.from()),
+            Self::Internal(tx) => Ok(tx.from()),
         }
     }
 }
 
-impl From<ArbitrumInternalTx> for ArbTxEnvelope {
-    fn from(tx: ArbitrumInternalTx) -> Self {
-        Self::ArbitrumInternal(tx.seal_slow())
+impl From<ArbInternalTx> for ArbTxEnvelope {
+    fn from(tx: ArbInternalTx) -> Self {
+        Self::Internal(tx.seal_slow())
     }
 }
 impl From<TxDeposit> for ArbTxEnvelope {
     fn from(tx: TxDeposit) -> Self {
-        Self::DepositTx(tx.seal_slow())
+        Self::Deposit(tx.seal_slow())
     }
 }
 impl From<SubmitRetryableTx> for ArbTxEnvelope {
     fn from(tx: SubmitRetryableTx) -> Self {
-        Self::SubmitRetryableTx(tx.seal_slow())
+        Self::SubmitRetryable(tx.seal_slow())
     }
 }
 impl From<TxUnsigned> for ArbTxEnvelope {
@@ -159,12 +159,12 @@ impl Display for ArbTxType {
             Self::Eip2930 => write!(f, "EIP-2930"),
             Self::Eip1559 => write!(f, "EIP-1559"),
             Self::Eip7702 => write!(f, "EIP-7702"),
-            Self::DepositTx => write!(f, "DepositTx"),
-            Self::SubmitRetryableTx => write!(f, "SubmitRetryableTx"),
+            Self::Deposit => write!(f, "Deposit"),
+            Self::SubmitRetryable => write!(f, "SubmitRetryable"),
             Self::Unsigned => write!(f, "Unsigned"),
             Self::Contract => write!(f, "Contract"),
             Self::Retry => write!(f, "Retry"),
-            Self::ArbitrumInternal => write!(f, "ArbitrumInternal"),
+            Self::Internal => write!(f, "Internal"),
         }
     }
 }

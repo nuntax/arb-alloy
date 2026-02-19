@@ -23,7 +23,7 @@ use crate::transactions::ArbTxType;
 /// (e.g. `startBlock`, `batchPostingReport`, `batchPostingReportV2`).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ArbitrumInternalTx {
+pub struct ArbInternalTx {
     /// Arbitrum chain identifier.
     #[serde(with = "alloy_serde::quantity")]
     pub chain_id: ChainId,
@@ -32,7 +32,7 @@ pub struct ArbitrumInternalTx {
     pub data: Bytes,
 }
 
-impl ArbitrumInternalTx {
+impl ArbInternalTx {
     /// Canonical ArbOS sender/recipient address for internal transactions.
     pub const ARBOS_ADDRESS: Address = address!("0x00000000000000000000000000000000000a4b05");
 
@@ -94,21 +94,21 @@ impl ArbitrumInternalTx {
     }
 }
 
-impl Typed2718 for ArbitrumInternalTx {
+impl Typed2718 for ArbInternalTx {
     fn ty(&self) -> u8 {
-        ArbTxType::ArbitrumInternal as u8
+        ArbTxType::Internal as u8
     }
 }
 
-impl Decodable for ArbitrumInternalTx {
+impl Decodable for ArbInternalTx {
     fn decode(data: &mut &[u8]) -> alloy_rlp::Result<Self> {
         Self::rlp_decode(data)
     }
 }
 
-impl Decodable2718 for ArbitrumInternalTx {
+impl Decodable2718 for ArbInternalTx {
     fn typed_decode(ty: u8, buf: &mut &[u8]) -> Eip2718Result<Self> {
-        if ty != ArbTxType::ArbitrumInternal as u8 {
+        if ty != ArbTxType::Internal as u8 {
             return Err(Eip2718Error::UnexpectedType(ty));
         }
         let tx = Self::rlp_decode(buf)?;
@@ -120,7 +120,7 @@ impl Decodable2718 for ArbitrumInternalTx {
     }
 }
 
-impl Encodable2718 for ArbitrumInternalTx {
+impl Encodable2718 for ArbInternalTx {
     fn encode_2718_len(&self) -> usize {
         self.rlp_encoded_length() + 1
     }
@@ -131,7 +131,7 @@ impl Encodable2718 for ArbitrumInternalTx {
     }
 }
 
-impl Transaction for ArbitrumInternalTx {
+impl Transaction for ArbInternalTx {
     fn chain_id(&self) -> Option<ChainId> {
         Some(self.chain_id)
     }
@@ -215,7 +215,7 @@ impl Transaction for ArbitrumInternalTx {
     }
 }
 
-impl Sealable for ArbitrumInternalTx {
+impl Sealable for ArbInternalTx {
     fn hash_slow(&self) -> B256 {
         self.tx_hash()
     }
