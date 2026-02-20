@@ -2,7 +2,8 @@
   "vectors": [
     {
       "name": "header_basic",
-      "extra_data": "0x1111111111111111111111111111111111111111111111111111111111111111000000000000002a00000000000182b90000000000000020",
+      "extra_data": "0x1111111111111111111111111111111111111111111111111111111111111111",
+      "mix_hash": "0x000000000000002a00000000000182b900000000000000200000000000000000",
       "expect": {
         "send_root": "0x1111111111111111111111111111111111111111111111111111111111111111",
         "send_count": 42,
@@ -12,7 +13,8 @@
     },
     {
       "name": "header_non_arbitrum",
-      "extra_data": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa0000000000000001000000000087a2380000000000000000",
+      "extra_data": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "mix_hash": "0x0000000000000001000000000087a23800000000000000000000000000000000",
       "expect": {
         "send_root": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "send_count": 1,
@@ -22,7 +24,8 @@
     },
     {
       "name": "header_large_values",
-      "extra_data": "0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0000000000000032",
+      "extra_data": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "mix_hash": "0xfffffffffffffffffffffffffffffffe00000000000000320000000000000000",
       "expect": {
         "send_root": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
         "send_count": 18446744073709551615,

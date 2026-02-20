@@ -2,10 +2,26 @@ use alloy_consensus::Header;
 use alloy_primitives::{B256, Bytes};
 use core::fmt;
 
-/// Exact byte length of Arbitrum's header info encoding in `Header.extra_data`.
-pub const ARB_HEADER_EXTRA_DATA_LEN: usize = 32 + 8 + 8 + 8;
+// Nitro reference 
+// - core/types/arb_types.go:
+//   - HeaderInfo.extra() writes SendRoot into Header.Extra (32 bytes)
+//   - HeaderInfo.mixDigest() writes SendCount/L1BlockNumber/ArbOSFormatVersion into MixDigest[0..24]
+//   - HeaderInfo.UpdateHeaderWithInfo() applies both fields to the header
+//   - DeserializeHeaderExtraInformation() decodes from Header.Extra + Header.MixDigest
+// - internal/ethapi/api.go:
+//   - RPCMarshalHeader() returns extraData and mixHash as separate RPC fields
+//   - fillArbitrumNitroHeaderInfo() derives sendRoot/sendCount/l1BlockNumber from those fields
 
-/// Decoded Arbitrum information embedded in `Header.extra_data`.
+/// Exact byte length of Arbitrum's `Header.extra_data`.
+pub const ARB_HEADER_EXTRA_DATA_LEN: usize = 32;
+/// Exact byte length of Arbitrum's `Header.mix_hash`.
+pub const ARB_HEADER_MIX_HASH_LEN: usize = 32;
+/// Number of bytes used inside `mix_hash` for Arbitrum header metadata.
+pub const ARB_HEADER_MIX_HASH_INFO_LEN: usize = 8 + 8 + 8;
+/// Byte length for the fixture-packed representation (`extra_data || mix_hash[..24]`).
+pub const ARB_HEADER_PACKED_LEN: usize = ARB_HEADER_EXTRA_DATA_LEN + ARB_HEADER_MIX_HASH_INFO_LEN;
+
+/// Decoded Arbitrum information embedded in `Header.extra_data` and `Header.mix_hash`.
 #[derive(
     Clone, Copy, Debug, Default, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize,
 )]
@@ -24,12 +40,17 @@ pub struct ArbHeaderInfo {
     pub arbos_format_version: u64,
 }
 
-/// Error while decoding Arbitrum header info from `Header.extra_data`.
+/// Error while decoding Arbitrum header info.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ArbHeaderDecodeError {
     /// The `extra_data` byte length did not match Arbitrum's expected format.
-    InvalidLength {
+    InvalidExtraDataLength {
         /// Number of bytes present in `extra_data`.
+        got: usize,
+    },
+    /// The `mix_hash` byte length was invalid.
+    InvalidMixHashLength {
+        /// Number of bytes present in `mix_hash`.
         got: usize,
     },
     /// The header decoded successfully but `arbos_format_version` is 0,
@@ -40,10 +61,16 @@ pub enum ArbHeaderDecodeError {
 impl fmt::Display for ArbHeaderDecodeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::InvalidLength { got } => {
+            Self::InvalidExtraDataLength { got } => {
                 write!(
                     f,
                     "invalid Arbitrum header extraData length: got {got}, expected {ARB_HEADER_EXTRA_DATA_LEN}"
+                )
+            }
+            Self::InvalidMixHashLength { got } => {
+                write!(
+                    f,
+                    "invalid Arbitrum header mixHash length: got {got}, expected {ARB_HEADER_MIX_HASH_LEN}"
                 )
             }
             Self::NotArbitrum => {
@@ -63,25 +90,37 @@ impl ArbHeaderInfo {
         self.arbos_format_version > 0
     }
 
-    /// Decodes Arbitrum header info from the raw `extra_data` bytes.
-    pub fn decode_extra_data(extra_data: &[u8]) -> Result<Self, ArbHeaderDecodeError> {
+    /// Decodes Arbitrum header info from consensus header fields.
+    ///
+    /// This mirrors Nitro's `DeserializeHeaderExtraInformation` behavior:
+    /// `send_root <- extra_data`, and
+    /// `send_count/l1_block_number/arbos_format_version <- mix_hash[0..24]`.
+    pub fn decode_header_parts(
+        extra_data: &[u8],
+        mix_hash: &[u8],
+    ) -> Result<Self, ArbHeaderDecodeError> {
         if extra_data.len() != ARB_HEADER_EXTRA_DATA_LEN {
-            return Err(ArbHeaderDecodeError::InvalidLength {
+            return Err(ArbHeaderDecodeError::InvalidExtraDataLength {
                 got: extra_data.len(),
+            });
+        }
+        if mix_hash.len() != ARB_HEADER_MIX_HASH_LEN {
+            return Err(ArbHeaderDecodeError::InvalidMixHashLength {
+                got: mix_hash.len(),
             });
         }
 
         let mut send_root = [0u8; 32];
-        send_root.copy_from_slice(&extra_data[..32]);
+        send_root.copy_from_slice(extra_data);
 
         let mut send_count_bytes = [0u8; 8];
-        send_count_bytes.copy_from_slice(&extra_data[32..40]);
+        send_count_bytes.copy_from_slice(&mix_hash[..8]);
 
         let mut l1_block_number_bytes = [0u8; 8];
-        l1_block_number_bytes.copy_from_slice(&extra_data[40..48]);
+        l1_block_number_bytes.copy_from_slice(&mix_hash[8..16]);
 
         let mut arbos_format_version_bytes = [0u8; 8];
-        arbos_format_version_bytes.copy_from_slice(&extra_data[48..56]);
+        arbos_format_version_bytes.copy_from_slice(&mix_hash[16..24]);
 
         Ok(Self {
             send_root: send_root.into(),
@@ -91,24 +130,60 @@ impl ArbHeaderInfo {
         })
     }
 
-    /// Decodes Arbitrum header info from an Ethereum header.
+    /// Decodes Arbitrum header info from a header.
     pub fn decode_header(header: &Header) -> Result<Self, ArbHeaderDecodeError> {
-        Self::decode_extra_data(header.extra_data.as_ref())
+        Self::decode_header_parts(header.extra_data.as_ref(), header.mix_hash.as_slice())
     }
 
     /// Encodes this info into Arbitrum header `extra_data` bytes.
     pub fn encode_extra_data(&self) -> Bytes {
         let mut out = [0u8; ARB_HEADER_EXTRA_DATA_LEN];
-        out[..32].copy_from_slice(self.send_root.as_slice());
-        out[32..40].copy_from_slice(&self.send_count.to_be_bytes());
-        out[40..48].copy_from_slice(&self.l1_block_number.to_be_bytes());
-        out[48..56].copy_from_slice(&self.arbos_format_version.to_be_bytes());
+        out.copy_from_slice(self.send_root.as_slice());
+        Bytes::copy_from_slice(&out)
+    }
+
+    /// Encodes this info into Arbitrum header `mix_hash` bytes.
+    pub fn encode_mix_hash(&self) -> B256 {
+        let mut out = [0u8; ARB_HEADER_MIX_HASH_LEN];
+        out[..8].copy_from_slice(&self.send_count.to_be_bytes());
+        out[8..16].copy_from_slice(&self.l1_block_number.to_be_bytes());
+        out[16..24].copy_from_slice(&self.arbos_format_version.to_be_bytes());
+        B256::from(out)
+    }
+
+    /// Updates an existing header with Arbitrum header info fields.
+    ///
+    /// This mirrors Nitro's `HeaderInfo.UpdateHeaderWithInfo`.
+    pub fn update_header(&self, header: &mut Header) {
+        header.extra_data = self.encode_extra_data();
+        header.mix_hash = self.encode_mix_hash();
+    }
+
+    /// Decodes from a packed compatibility representation:
+    /// `extra_data || mix_hash[..24]`.
+    pub fn decode_packed(packed: &[u8]) -> Result<Self, ArbHeaderDecodeError> {
+        if packed.len() != ARB_HEADER_PACKED_LEN {
+            return Err(ArbHeaderDecodeError::InvalidExtraDataLength { got: packed.len() });
+        }
+        let mut mix_hash = [0u8; ARB_HEADER_MIX_HASH_LEN];
+        mix_hash[..ARB_HEADER_MIX_HASH_INFO_LEN]
+            .copy_from_slice(&packed[ARB_HEADER_EXTRA_DATA_LEN..ARB_HEADER_PACKED_LEN]);
+        Self::decode_header_parts(&packed[..ARB_HEADER_EXTRA_DATA_LEN], &mix_hash)
+    }
+
+    /// Encodes to a packed compatibility representation:
+    /// `extra_data || mix_hash[..24]`.
+    pub fn encode_packed(&self) -> Bytes {
+        let mut out = [0u8; ARB_HEADER_PACKED_LEN];
+        out[..ARB_HEADER_EXTRA_DATA_LEN].copy_from_slice(self.send_root.as_slice());
+        out[ARB_HEADER_EXTRA_DATA_LEN..ARB_HEADER_PACKED_LEN]
+            .copy_from_slice(&self.encode_mix_hash().as_slice()[..ARB_HEADER_MIX_HASH_INFO_LEN]);
         Bytes::copy_from_slice(&out)
     }
 
     /// Returns the L1 block number from an Arbitrum header.
     ///
-    /// Returns an error if `extra_data` does not decode or if the header
+    /// Returns an error if the header does not decode or if the header
     /// has `arbos_format_version == 0` (not an Arbitrum header).
     pub fn parent_l1_block_number(header: &Header) -> Result<u64, ArbHeaderDecodeError> {
         let info = Self::decode_header(header)?;
@@ -124,7 +199,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn header_info_roundtrip() {
+    fn header_info_roundtrip_header_fields() {
         let info = ArbHeaderInfo {
             send_root: B256::from([0x11; 32]),
             send_count: 42,
@@ -132,16 +207,34 @@ mod tests {
             arbos_format_version: 32,
         };
 
-        let bytes = info.encode_extra_data();
-        let decoded = ArbHeaderInfo::decode_extra_data(bytes.as_ref()).unwrap();
+        let mut header = Header::default();
+        info.update_header(&mut header);
+        let decoded = ArbHeaderInfo::decode_header(&header).unwrap();
 
         assert_eq!(decoded, info);
     }
 
     #[test]
-    fn decode_rejects_invalid_length() {
-        let err = ArbHeaderInfo::decode_extra_data(&[0u8; 55]).unwrap_err();
-        assert_eq!(err, ArbHeaderDecodeError::InvalidLength { got: 55 });
+    fn decode_rejects_invalid_extra_data_length() {
+        let mix_hash = [0u8; ARB_HEADER_MIX_HASH_LEN];
+        let err = ArbHeaderInfo::decode_header_parts(&[0u8; 31], &mix_hash).unwrap_err();
+        assert_eq!(
+            err,
+            ArbHeaderDecodeError::InvalidExtraDataLength { got: 31 }
+        );
+    }
+
+    #[test]
+    fn packed_roundtrip() {
+        let info = ArbHeaderInfo {
+            send_root: B256::from([0x33; 32]),
+            send_count: 123,
+            l1_block_number: 456,
+            arbos_format_version: 50,
+        };
+        let packed = info.encode_packed();
+        let decoded = ArbHeaderInfo::decode_packed(packed.as_ref()).unwrap();
+        assert_eq!(decoded, info);
     }
 
     #[test]
@@ -165,6 +258,7 @@ mod tests {
         let header = Header {
             number: 7777,
             extra_data: info.encode_extra_data(),
+            mix_hash: info.encode_mix_hash(),
             ..Default::default()
         };
         assert_eq!(
@@ -185,6 +279,7 @@ mod tests {
         let header = Header {
             number: 7777,
             extra_data: info.encode_extra_data(),
+            mix_hash: info.encode_mix_hash(),
             ..Default::default()
         };
 

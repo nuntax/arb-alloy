@@ -60,6 +60,7 @@ type HeaderFixtureFile struct {
 type HeaderFixture struct {
 	Name      string       `json:"name"`
 	ExtraData string       `json:"extra_data"`
+	MixHash   string       `json:"mix_hash"`
 	Expect    HeaderExpect `json:"expect"`
 }
 
@@ -280,11 +281,10 @@ func mustHeaderFixture(name string, info types.HeaderInfo) HeaderFixture {
 		panic(fmt.Sprintf("header info roundtrip mismatch for %s", name))
 	}
 
-	extraData := packArbAlloyHeaderExtraData(header)
-
 	return HeaderFixture{
 		Name:      name,
-		ExtraData: "0x" + hex.EncodeToString(extraData),
+		ExtraData: "0x" + hex.EncodeToString(header.Extra),
+		MixHash:   header.MixDigest.Hex(),
 		Expect: HeaderExpect{
 			SendRoot:           info.SendRoot.Hex(),
 			SendCount:          info.SendCount,
@@ -292,15 +292,6 @@ func mustHeaderFixture(name string, info types.HeaderInfo) HeaderFixture {
 			ArbOSFormatVersion: info.ArbOSFormatVersion,
 		},
 	}
-}
-
-func packArbAlloyHeaderExtraData(header *types.Header) []byte {
-	var out [56]byte
-	copy(out[:32], header.Extra)
-	copy(out[32:40], header.MixDigest[:8])
-	copy(out[40:48], header.MixDigest[8:16])
-	copy(out[48:56], header.MixDigest[16:24])
-	return out[:]
 }
 
 func writeJSON(path string, value interface{}) error {

@@ -1,7 +1,10 @@
 #![allow(missing_docs)]
 
 use alloy_primitives::{B256, hex};
-use arb_alloy_consensus::{ArbHeaderInfo, header::ARB_HEADER_EXTRA_DATA_LEN};
+use arb_alloy_consensus::{
+    ArbHeaderInfo,
+    header::{ARB_HEADER_EXTRA_DATA_LEN, ARB_HEADER_MIX_HASH_LEN},
+};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -13,6 +16,7 @@ struct FixtureFile {
 struct HeaderFixture {
     name: String,
     extra_data: String,
+    mix_hash: String,
     expect: HeaderExpect,
 }
 
@@ -32,15 +36,22 @@ fn nitro_header_vectors_roundtrip_and_accessors() {
 
     for fixture in file.vectors {
         let extra_data = parse_hex_bytes(&fixture.extra_data);
+        let mix_hash = parse_hex_bytes(&fixture.mix_hash);
         assert_eq!(
             extra_data.len(),
             ARB_HEADER_EXTRA_DATA_LEN,
             "{}: unexpected extra_data length",
             fixture.name
         );
+        assert_eq!(
+            mix_hash.len(),
+            ARB_HEADER_MIX_HASH_LEN,
+            "{}: unexpected mix_hash length",
+            fixture.name
+        );
 
-        let decoded = ArbHeaderInfo::decode_extra_data(extra_data.as_ref())
-            .unwrap_or_else(|e| panic!("{}: decode_extra_data failed: {e}", fixture.name));
+        let decoded = ArbHeaderInfo::decode_header_parts(extra_data.as_ref(), mix_hash.as_ref())
+            .unwrap_or_else(|e| panic!("{}: decode_header_parts failed: {e}", fixture.name));
 
         assert_eq!(
             decoded.send_root,
@@ -64,11 +75,18 @@ fn nitro_header_vectors_roundtrip_and_accessors() {
             fixture.name
         );
 
-        let reencoded = decoded.encode_extra_data();
+        let reencoded_extra = decoded.encode_extra_data();
+        let reencoded_mix = decoded.encode_mix_hash();
         assert_eq!(
-            reencoded.as_ref(),
+            reencoded_extra.as_ref(),
             extra_data.as_slice(),
-            "{}: re-encoded bytes mismatch",
+            "{}: re-encoded extra_data bytes mismatch",
+            fixture.name
+        );
+        assert_eq!(
+            reencoded_mix.as_slice(),
+            mix_hash.as_slice(),
+            "{}: re-encoded mix_hash bytes mismatch",
             fixture.name
         );
     }
