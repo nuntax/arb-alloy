@@ -2,6 +2,7 @@ use core::fmt::Display;
 
 use alloy_consensus::{
     Sealed, Signed, TransactionEnvelope, TxEip1559, TxEip2930, TxEip7702, TxLegacy,
+    transaction::TxHashRef,
 };
 use alloy_primitives::{Address, Sealable, TxHash};
 pub use contract::TxContract;
@@ -69,21 +70,32 @@ pub enum ArbTxEnvelope {
 }
 
 impl ArbTxEnvelope {
-    /// Returns the transaction hash.
-    pub fn hash(&self) -> TxHash {
+    /// Returns a reference to the transaction hash.
+    pub fn hash_ref(&self) -> &TxHash {
         match self {
-            Self::Legacy(tx) => *tx.hash(),
-            Self::Eip2930(tx) => *tx.hash(),
-            Self::Eip1559(tx) => *tx.hash(),
-            Self::Eip7702(tx) => *tx.hash(),
-            Self::SubmitRetryable(tx) => tx.hash(),
-            Self::Deposit(tx) => tx.hash(),
-            Self::Unsigned(tx) => tx.hash(),
-            Self::Contract(tx) => tx.hash(),
-            Self::Retry(tx) => tx.hash(),
-            Self::Internal(tx) => tx.hash(),
+            Self::Legacy(tx) => tx.hash(),
+            Self::Eip2930(tx) => tx.hash(),
+            Self::Eip1559(tx) => tx.hash(),
+            Self::Eip7702(tx) => tx.hash(),
+            Self::SubmitRetryable(tx) => tx.hash_ref(),
+            Self::Deposit(tx) => tx.hash_ref(),
+            Self::Unsigned(tx) => tx.hash_ref(),
+            Self::Contract(tx) => tx.hash_ref(),
+            Self::Retry(tx) => tx.hash_ref(),
+            Self::Internal(tx) => tx.hash_ref(),
         }
     }
+
+    /// Returns the transaction hash by value.
+    pub fn hash(&self) -> TxHash {
+        *self.hash_ref()
+    }
+
+    /// Returns the transaction hash by value.
+    pub fn tx_hash(&self) -> TxHash {
+        self.hash()
+    }
+
     /// Recover the sender address.
     pub fn sender(&self) -> Result<Address, alloy_primitives::SignatureError> {
         match self {
@@ -146,6 +158,76 @@ impl ArbTxEnvelope {
             Self::Retry(tx) => Ok(tx.from()),
             Self::Internal(tx) => Ok(tx.from()),
         }
+    }
+}
+
+impl TxHashRef for ArbTxEnvelope {
+    fn tx_hash(&self) -> &TxHash {
+        self.hash_ref()
+    }
+}
+
+#[cfg(feature = "k256")]
+impl alloy_consensus::transaction::SignerRecoverable for ArbTxEnvelope {
+    fn recover_signer(&self) -> Result<Address, alloy_consensus::crypto::RecoveryError> {
+        match self {
+            Self::Legacy(tx) => alloy_consensus::crypto::secp256k1::recover_signer(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip2930(tx) => alloy_consensus::crypto::secp256k1::recover_signer(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip1559(tx) => alloy_consensus::crypto::secp256k1::recover_signer(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip7702(tx) => alloy_consensus::crypto::secp256k1::recover_signer(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::SubmitRetryable(tx) => Ok(tx.from()),
+            Self::Deposit(tx) => Ok(tx.from()),
+            Self::Unsigned(tx) => Ok(tx.from()),
+            Self::Contract(tx) => Ok(tx.from()),
+            Self::Retry(tx) => Ok(tx.from()),
+            Self::Internal(tx) => Ok(tx.from()),
+        }
+    }
+
+    fn recover_signer_unchecked(&self) -> Result<Address, alloy_consensus::crypto::RecoveryError> {
+        match self {
+            Self::Legacy(tx) => alloy_consensus::crypto::secp256k1::recover_signer_unchecked(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip2930(tx) => alloy_consensus::crypto::secp256k1::recover_signer_unchecked(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip1559(tx) => alloy_consensus::crypto::secp256k1::recover_signer_unchecked(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::Eip7702(tx) => alloy_consensus::crypto::secp256k1::recover_signer_unchecked(
+                tx.signature(),
+                tx.signature_hash(),
+            ),
+            Self::SubmitRetryable(tx) => Ok(tx.from()),
+            Self::Deposit(tx) => Ok(tx.from()),
+            Self::Unsigned(tx) => Ok(tx.from()),
+            Self::Contract(tx) => Ok(tx.from()),
+            Self::Retry(tx) => Ok(tx.from()),
+            Self::Internal(tx) => Ok(tx.from()),
+        }
+    }
+
+    fn recover_unchecked_with_buf(
+        &self,
+        _buf: &mut alloc::vec::Vec<u8>,
+    ) -> Result<Address, alloy_consensus::crypto::RecoveryError> {
+        self.recover_signer_unchecked()
     }
 }
 

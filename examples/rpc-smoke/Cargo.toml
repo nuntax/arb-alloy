@@ -1,0 +1,16 @@
+[package]
+name = "arb-alloy-rpc-smoke"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+arb-alloy = { path = "../../crates/arb-alloy", default-features = false, features = ["full", "std", "serde", "k256"] }
+alloy-eips = { version = "1.6.3", default-features = false }
+alloy-network-primitives = { version = "1.6.3", default-features = false }
+alloy-primitives = { version = "1.5.7", default-features = false }
+alloy-provider = { version = "1.6.3", default-features = false, features = ["reqwest", "reqwest-default-tls"] }
+reqwest = { version = "0.12", default-features = false }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[workspace]
