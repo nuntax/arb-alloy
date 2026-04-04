@@ -22,7 +22,6 @@ alloy-consensus.workspace = true
 alloy-primitives.workspace = true
 alloy-rpc-types-eth.workspace = true
 alloy-provider.workspace = true
-alloy-signer.workspace = true
 arb-alloy-consensus.workspace = true
 arb-alloy-rpc-types.workspace = true
 
@@ -38,4 +37,5 @@ serde = [
 ]
 
 [dev-dependencies]
+alloy-signer.workspace = true
 async-trait.workspace = true

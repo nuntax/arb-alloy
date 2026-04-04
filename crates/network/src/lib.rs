@@ -10,10 +10,9 @@
 extern crate alloc;
 
 use alloc::{vec, vec::Vec};
-use alloy_consensus::{Header as EthHeader, TxEnvelope, TxType, TypedTransaction};
+use alloy_consensus::{Header as EthHeader, TxType, TypedTransaction};
 use alloy_network::{
-    BuildResult, Ethereum, EthereumWallet, Network, NetworkWallet, TransactionBuilder,
-    TransactionBuilderError,
+    BuildResult, Network, NetworkWallet, TransactionBuilder, TransactionBuilderError,
 };
 use alloy_primitives::{Address, Bytes, ChainId, TxKind, U256};
 use alloy_provider::fillers::{
@@ -274,47 +273,6 @@ impl TransactionBuilder<Arbitrum> for ArbTransactionRequest {
     }
 }
 
-impl NetworkWallet<Arbitrum> for EthereumWallet {
-    fn default_signer_address(&self) -> Address {
-        NetworkWallet::<Ethereum>::default_signer_address(self)
-    }
-
-    fn has_signer_for(&self, address: &Address) -> bool {
-        NetworkWallet::<Ethereum>::has_signer_for(self, address)
-    }
-
-    fn signer_addresses(&self) -> impl Iterator<Item = Address> {
-        NetworkWallet::<Ethereum>::signer_addresses(self)
-    }
-
-    async fn sign_transaction_from(
-        &self,
-        sender: Address,
-        tx: ArbTypedTransaction,
-    ) -> alloy_signer::Result<ArbTxEnvelope> {
-        let tx = match tx {
-            ArbTypedTransaction::Legacy(tx) => TypedTransaction::Legacy(tx),
-            ArbTypedTransaction::Eip2930(tx) => TypedTransaction::Eip2930(tx),
-            ArbTypedTransaction::Eip1559(tx) => TypedTransaction::Eip1559(tx),
-            ArbTypedTransaction::Eip7702(tx) => TypedTransaction::Eip7702(tx),
-            _ => {
-                return Err(alloy_signer::Error::other(
-                    "not implemented for custom Arbitrum transaction types",
-                ));
-            }
-        };
-        let tx = NetworkWallet::<Ethereum>::sign_transaction_from(self, sender, tx).await?;
-
-        Ok(match tx {
-            TxEnvelope::Legacy(tx) => ArbTxEnvelope::Legacy(tx),
-            TxEnvelope::Eip2930(tx) => ArbTxEnvelope::Eip2930(tx),
-            TxEnvelope::Eip1559(tx) => ArbTxEnvelope::Eip1559(tx),
-            TxEnvelope::Eip7702(tx) => ArbTxEnvelope::Eip7702(tx),
-            TxEnvelope::Eip4844(_) => unreachable!("eip4844 is unsupported on Arbitrum"),
-        })
-    }
-}
-
 impl RecommendedFillers for Arbitrum {
     type RecommendedFillers = JoinFill<GasFiller, JoinFill<NonceFiller, ChainIdFiller>>;
 
@@ -327,7 +285,7 @@ impl RecommendedFillers for Arbitrum {
 mod tests {
     use super::*;
     use alloy_consensus::{SignableTransaction, TxEip1559, TxEip2930, TxEip7702, TxLegacy};
-    use alloy_network::TxSigner;
+    use alloy_network::{EthereumWallet, TxSigner};
     use alloy_primitives::Signature;
     use arb_alloy_consensus::transactions::internal::ArbInternalTx;
     use std::future::Future;
@@ -424,20 +382,16 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Arbitrum-specific transactions cannot be converted from a signed envelope")]
     fn network_wallet_bridge_rejects_custom_arbitrum_transaction_types() {
         let (wallet, sender) = make_wallet();
-
-        let err = block_on(NetworkWallet::<Arbitrum>::sign_transaction_from(
+        // Arb-specific transaction types are L1-originated and cannot be user-signed.
+        // SignableTransaction::encode_for_signing panics for these variants.
+        let _ = block_on(NetworkWallet::<Arbitrum>::sign_transaction_from(
             &wallet,
             sender,
             ArbTypedTransaction::Internal(ArbInternalTx::new(42161, Bytes::new())),
-        ))
-        .expect_err("custom Arbitrum tx signing should fail");
-
-        assert!(
-            err.to_string()
-                .contains("not implemented for custom Arbitrum transaction types")
-        );
+        ));
     }
 
     #[test]
