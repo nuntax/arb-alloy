@@ -1,5 +1,7 @@
 # arb-alloy
 
+<img src="./arb-alloy-logo.png" alt="arb-alloy logo" width="320" />
+
 Arbitrum integrations for the Alloy Rust SDK.
 
 This workspace contains:
