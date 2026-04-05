@@ -21,6 +21,11 @@ alloy-contract.workspace = true
 alloy-core.workspace = true
 alloy-primitives.workspace = true
 
+[dev-dependencies]
+alloy-provider = { workspace = true, features = ["reqwest", "reqwest-rustls-tls"] }
+arb-alloy-network.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
 [features]
 default = ["std"]
 std = [

@@ -43,3 +43,49 @@ alloy_core::sol! {
         event LifetimeExtended(bytes32 indexed ticketId, uint256 newTimeout);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_primitives::B256;
+    use alloy_provider::ProviderBuilder;
+    use arb_alloy_network::Arbitrum;
+
+    use crate::addresses::ARB_RETRYABLE_TX;
+    use crate::interfaces::ArbRetryableTx;
+
+    fn looks_like_expected_call_error(msg: &str) -> bool {
+        msg.contains("server returned an error response")
+            || msg.contains("error code")
+            || msg.contains("execution reverted")
+    }
+
+    #[tokio::test]
+    async fn arb_retryable_tx_live_view_calls() -> Result<(), Box<dyn std::error::Error>> {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+        let retryable = ArbRetryableTx::new(ARB_RETRYABLE_TX, &provider);
+
+        let lifetime = retryable.getLifetime().call().await?;
+        assert!(lifetime > 0);
+
+        let _current_redeemer = retryable.getCurrentRedeemer().call().await?;
+
+        if let Err(e) = retryable.getBeneficiary(B256::ZERO).call().await {
+            assert!(looks_like_expected_call_error(&e.to_string()), "{e}");
+        }
+        if let Err(e) = retryable.getTimeout(B256::ZERO).call().await {
+            assert!(looks_like_expected_call_error(&e.to_string()), "{e}");
+        }
+
+        Ok(())
+    }
+}

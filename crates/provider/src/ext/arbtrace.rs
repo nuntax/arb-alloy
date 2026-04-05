@@ -135,10 +135,18 @@ where
 
 #[cfg(test)]
 mod tests {
-    use alloy_provider::ProviderBuilder;
+    use alloy_provider::{Provider, ProviderBuilder};
     use alloy_transport::mock::Asserter;
+    use arb_alloy_network::Arbitrum;
 
     use super::ArbTraceProviderExt;
+
+    fn looks_like_rpc_server_error(msg: &str) -> bool {
+        msg.contains("server returned an error response")
+            || msg.contains("error code")
+            || msg.contains("-32601")
+            || msg.contains("method")
+    }
 
     #[tokio::test]
     async fn arbtrace_extension_uses_expected_rpc_method_names() {
@@ -166,5 +174,46 @@ mod tests {
             .await
             .unwrap_err();
         assert!(err.to_string().contains("arbtrace_filter"), "{err}");
+    }
+
+    #[tokio::test]
+    async fn arbtrace_extension_live_local_chain_smoke() -> Result<(), Box<dyn std::error::Error>> {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+        let _ = provider.get_block_number().await?;
+
+        for res in [
+            provider
+                .arbtrace_call(
+                    serde_json::json!({}),
+                    serde_json::json!(["trace"]),
+                    serde_json::json!("latest"),
+                )
+                .await
+                .map(|_| ()),
+            provider
+                .arbtrace_block(serde_json::json!("latest"))
+                .await
+                .map(|_| ()),
+            provider
+                .arbtrace_filter(Default::default())
+                .await
+                .map(|_| ()),
+        ] {
+            if let Err(e) = res {
+                assert!(looks_like_rpc_server_error(&e.to_string()), "{e}");
+            }
+        }
+
+        Ok(())
     }
 }

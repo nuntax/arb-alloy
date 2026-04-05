@@ -382,7 +382,9 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Arbitrum-specific transactions cannot be converted from a signed envelope")]
+    #[should_panic(
+        expected = "Arbitrum-specific transactions cannot be converted from a signed envelope"
+    )]
     fn network_wallet_bridge_rejects_custom_arbitrum_transaction_types() {
         let (wallet, sender) = make_wallet();
         // Arb-specific transaction types are L1-originated and cannot be user-signed.

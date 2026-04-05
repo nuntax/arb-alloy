@@ -60,3 +60,35 @@ alloy_core::sol! {
         function blockL1Num(uint64 l2BlockNum) external view returns (uint64);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_provider::{Provider, ProviderBuilder};
+    use arb_alloy_network::Arbitrum;
+
+    use crate::addresses::NODE_INTERFACE;
+    use crate::interfaces::NodeInterface;
+
+    #[tokio::test]
+    async fn node_interface_live_view_calls() -> Result<(), Box<dyn std::error::Error>> {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+        let ni = NodeInterface::new(NODE_INTERFACE, &provider);
+
+        let latest = provider.get_block_number().await?;
+        let _genesis = ni.nitroGenesisBlock().call().await?;
+        let l1_num = ni.blockL1Num(latest).call().await?;
+        assert!(l1_num > 0);
+
+        Ok(())
+    }
+}

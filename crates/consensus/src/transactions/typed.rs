@@ -438,19 +438,13 @@ impl From<Signed<ArbitrumTypedTransaction>> for ArbTxEnvelope {
     fn from(value: Signed<ArbitrumTypedTransaction>) -> Self {
         let sig = *value.signature();
         match value.strip_signature() {
-            ArbitrumTypedTransaction::Legacy(tx) => {
-                Self::Legacy(Signed::new_unhashed(tx, sig))
+            ArbitrumTypedTransaction::Legacy(tx) => Self::Legacy(Signed::new_unhashed(tx, sig)),
+            ArbitrumTypedTransaction::Eip2930(tx) => Self::Eip2930(Signed::new_unhashed(tx, sig)),
+            ArbitrumTypedTransaction::Eip1559(tx) => Self::Eip1559(Signed::new_unhashed(tx, sig)),
+            ArbitrumTypedTransaction::Eip7702(tx) => Self::Eip7702(Signed::new_unhashed(tx, sig)),
+            _ => {
+                panic!("Arbitrum-specific transactions cannot be converted from a signed envelope")
             }
-            ArbitrumTypedTransaction::Eip2930(tx) => {
-                Self::Eip2930(Signed::new_unhashed(tx, sig))
-            }
-            ArbitrumTypedTransaction::Eip1559(tx) => {
-                Self::Eip1559(Signed::new_unhashed(tx, sig))
-            }
-            ArbitrumTypedTransaction::Eip7702(tx) => {
-                Self::Eip7702(Signed::new_unhashed(tx, sig))
-            }
-            _ => panic!("Arbitrum-specific transactions cannot be converted from a signed envelope"),
         }
     }
 }

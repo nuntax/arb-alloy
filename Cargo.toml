@@ -8,13 +8,14 @@ members = [
   "crates/provider",
   "crates/precompiles",
   "crates/arb-alloy",
+  "crates/test-utils",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.92"
-authors = ["Alloy Contributors"]
+authors = ["Nuntax"]
 license = "Apache-2.0 OR MIT"
 homepage = "https://github.com/alloy-rs/arb-alloy"
 repository = "https://github.com/alloy-rs/arb-alloy"
@@ -63,10 +64,12 @@ alloy-network-primitives = { version = "1.6.3", default-features = false }
 alloy-rpc-types-eth = { version = "1.6.3", default-features = false }
 alloy-provider = { version = "1.6.3", default-features = false }
 alloy-signer = { version = "1.6.3", default-features = false }
+alloy-signer-local = { version = "1.6.3", default-features = false }
 alloy-transport = { version = "1.6.3", default-features = false }
+dotenvy = { version = "0.15", default-features = false }
 
 # External alloy-core / primitives
-alloy-core = { version = "1.4.1", default-features = false, features = ["sol-types"] }
+alloy-core = { version = "1.4.1", default-features = false, features = ["sol-types", "json"] }
 alloy-primitives = { version = "1.4.1", default-features = false }
 
 # External
@@ -76,6 +79,7 @@ serde_derive = "1"
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
 tracing = "0.1"
 async-trait = "0.1"
+tokio = { version = "1", default-features = false }
 
 [patch.crates-io]
 # alloy-consensus = { git = "https://github.com/alloy-rs/alloy", rev = "YOUR_REV" }

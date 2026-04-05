@@ -41,10 +41,18 @@ where
 
 #[cfg(test)]
 mod tests {
-    use alloy_provider::ProviderBuilder;
+    use alloy_provider::{Provider, ProviderBuilder};
     use alloy_transport::mock::Asserter;
+    use arb_alloy_network::Arbitrum;
 
     use super::AuctioneerProviderExt;
+
+    fn looks_like_rpc_server_error(msg: &str) -> bool {
+        msg.contains("server returned an error response")
+            || msg.contains("error code")
+            || msg.contains("-32601")
+            || msg.contains("method")
+    }
 
     #[tokio::test]
     async fn auctioneer_extension_uses_expected_rpc_method_names() {
@@ -60,5 +68,31 @@ mod tests {
                 .contains("auctioneer_submitAuctionResolutionTransaction"),
             "{err}"
         );
+    }
+
+    #[tokio::test]
+    async fn auctioneer_extension_live_local_chain_smoke() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+        let _ = provider.get_block_number().await?;
+
+        if let Err(e) = provider
+            .auctioneer_submit_auction_resolution_transaction(alloy_primitives::Bytes::new())
+            .await
+        {
+            assert!(looks_like_rpc_server_error(&e.to_string()), "{e}");
+        }
+
+        Ok(())
     }
 }

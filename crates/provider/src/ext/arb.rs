@@ -80,12 +80,20 @@ where
 
 #[cfg(test)]
 mod tests {
-    use alloy_provider::ProviderBuilder;
+    use alloy_provider::{Provider, ProviderBuilder};
     use alloy_rpc_types_eth::BlockNumberOrTag;
     use alloy_transport::mock::Asserter;
+    use arb_alloy_network::Arbitrum;
     use arb_alloy_rpc_types::{ArbMaintenanceStatus, ArbRawBlockMetadata};
 
     use super::ArbProviderExt;
+
+    fn looks_like_rpc_server_error(msg: &str) -> bool {
+        msg.contains("server returned an error response")
+            || msg.contains("error code")
+            || msg.contains("-32601")
+            || msg.contains("method")
+    }
 
     #[tokio::test]
     async fn arb_extension_success_paths() {
@@ -151,5 +159,42 @@ mod tests {
             err.to_string().contains("arb_findBatchContainingBlock"),
             "{err}"
         );
+    }
+
+    #[tokio::test]
+    async fn arb_extension_live_local_chain_smoke() -> Result<(), Box<dyn std::error::Error>> {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+
+        let _ = provider.get_block_number().await?;
+
+        for res in [
+            provider.arb_check_publisher_health().await.map(|_| ()),
+            provider.arb_maintenance_status().await.map(|_| ()),
+            provider
+                .arb_get_raw_block_metadata(BlockNumberOrTag::Latest, BlockNumberOrTag::Latest)
+                .await
+                .map(|_| ()),
+            provider.arb_get_l1_confirmations(0).await.map(|_| ()),
+            provider
+                .arb_find_batch_containing_block(0)
+                .await
+                .map(|_| ()),
+        ] {
+            if let Err(e) = res {
+                assert!(looks_like_rpc_server_error(&e.to_string()), "{e}");
+            }
+        }
+
+        Ok(())
     }
 }

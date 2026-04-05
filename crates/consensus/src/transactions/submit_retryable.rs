@@ -405,21 +405,19 @@ impl Sealable for SubmitRetryableTx {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloy_network_primitives::ReceiptResponse;
     use alloy_primitives::address;
     use alloy_primitives::hex;
     use alloy_primitives::hex::FromHex;
+    use alloy_provider::Provider;
+    use serial_test::serial;
+    use test_utils::{RetryableParams, TestContext, dev_address};
     #[test]
     fn test_decode_submit_retryable() {
-        //https://arbiscan.io/tx/0x19f98fc86cae7ac924a2ad789e86fca824aff065ec7366daedeb1d8e60ae96f5
         let encoded = hex::decode(
             "000000000000000000000000abc50aee89c1b38d4ddc4ac0aee43647215ff7fc000000000000000000000000000000000000000000000000002382664887b00000000000000000000000000000000000000000000000000000239debfd13ec00000000000000000000000000000000000000000000000000000001bdcb71f400000000000000000000000000abc50aee89c1b38d4ddc4ac0aee43647215ff7fc000000000000000000000000abc50aee89c1b38d4ddc4ac0aee43647215ff7fc00000000000000000000000000000000000000000000000000000000000493e00000000000000000000000000000000000000000000000000000000005a1c5c00000000000000000000000000000000000000000000000000000000000000000",
         ).unwrap();
         let mut buf = &encoded[..];
-        println!(
-            "Buffer: {:?}, length: {}",
-            hex::encode(buf),
-            hex::encode(buf).len()
-        );
         let from = address!("0x8789dfc2406ac2d60f174813e8a79f2b69862566");
         let l1_base_fee = U256::from(335396856);
         let request_id = B256::from(U256::from(0x20eb40).to_be_bytes::<32>());
@@ -438,5 +436,71 @@ mod tests {
             TxHash::from_hex("0x19f98fc86cae7ac924a2ad789e86fca824aff065ec7366daedeb1d8e60ae96f5")
                 .unwrap()
         )
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn submit_retryable_produces_submit_retryable_tx_on_l2()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let Some(ctx) = TestContext::try_from_env().await else {
+            eprintln!("ARBITRUM_RPC/ETHEREUM_RPC not set — skipping");
+            return Ok(());
+        };
+
+        let since = ctx.arbitrum_provider.get_block_number().await?;
+        println!("[retryable] scanning L2 from block {since}");
+
+        let max_submission_cost = U256::from(100_000_000_000_000u64);
+        let gas_limit = U256::from(100_000u64);
+        let max_fee_per_gas = U256::from(1_000_000_000u64);
+        let value = max_submission_cost + gas_limit * max_fee_per_gas;
+
+        let dev_addr = dev_address();
+        println!("[retryable] dev addr (L2 target): {dev_addr}");
+
+        println!("[retryable] submitting createRetryableTicket on L1 (value={value} wei)...");
+        let l1_receipt = ctx
+            .submit_retryable(RetryableParams {
+                to: dev_addr,
+                l2_call_value: U256::ZERO,
+                max_submission_cost,
+                excess_fee_refund_address: dev_addr,
+                call_value_refund_address: dev_addr,
+                gas_limit,
+                max_fee_per_gas,
+                data: Default::default(),
+                value,
+            })
+            .await?;
+        assert!(l1_receipt.status(), "L1 createRetryableTicket tx reverted");
+        println!(
+            "[retryable] L1 tx confirmed: {} (block {})",
+            l1_receipt.transaction_hash(),
+            l1_receipt.block_number().unwrap_or_default(),
+        );
+
+        println!("[retryable] advancing L1 by 2 blocks...");
+        ctx.advance_l1_blocks(2).await?;
+
+        println!("[retryable] waiting for SubmitRetryable (0x69) on L2...");
+        let l2_hash = ctx
+            .wait_for_l2_tx_type(0x69, since, std::time::Duration::from_secs(60))
+            .await?;
+        println!("[retryable] found L2 SubmitRetryable tx: {l2_hash}");
+
+        let receipt = ctx
+            .arbitrum_provider
+            .get_transaction_receipt(l2_hash)
+            .await?;
+        assert!(
+            receipt.is_some(),
+            "missing L2 receipt for SubmitRetryable tx {l2_hash}"
+        );
+        println!(
+            "[retryable] L2 receipt: block {}",
+            receipt.unwrap().block_number().unwrap_or_default(),
+        );
+
+        Ok(())
     }
 }

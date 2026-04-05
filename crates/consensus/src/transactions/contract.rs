@@ -30,7 +30,7 @@ pub struct TxContract {
     #[serde(alias = "maxFeePerGas")]
     pub gas_fee_cap: U256,
     /// Gas limit for execution.
-    #[serde(alias = "gas")]
+    #[serde(alias = "gas", with = "alloy_serde::quantity")]
     pub gas_limit: u64,
     /// Call target (or create).
     pub to: TxKind,
@@ -233,5 +233,104 @@ impl Transaction for TxContract {
 impl Sealable for TxContract {
     fn hash_slow(&self) -> B256 {
         self.tx_hash()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloy_eips::Typed2718;
+    use alloy_network_primitives::ReceiptResponse;
+    use alloy_primitives::{address, b256, uint};
+    use alloy_provider::Provider;
+    use serial_test::serial;
+    use test_utils::{ContractTxParams, TestContext, dev_address};
+
+    use super::TxContract;
+
+    #[test]
+    fn deserialize_rpc_shape_supports_max_fee_per_gas() {
+        let raw = r#"{
+            "chainId":"0x64aba",
+            "requestId":"0x46f8b53a9fbf03f72358216811dc1d1b64d8c26f9b99751ca2e5bc0fd8824f6d",
+            "from":"0x502fae7d46d88f08fc2f8ed27fcb2ab183eb3e1f",
+            "gas":"0x186a0",
+            "maxFeePerGas":"0x3b9aca00",
+            "to":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e",
+            "value":"0x0",
+            "input":"0x"
+        }"#;
+
+        let tx: TxContract = serde_json::from_str(raw).expect("valid TxContract RPC shape");
+
+        assert_eq!(tx.ty(), 0x66);
+        assert_eq!(
+            tx.request_id,
+            b256!("46f8b53a9fbf03f72358216811dc1d1b64d8c26f9b99751ca2e5bc0fd8824f6d")
+        );
+        assert_eq!(
+            tx.from,
+            address!("0x502fae7d46d88f08fc2f8ed27fcb2ab183eb3e1f")
+        );
+        assert_eq!(tx.gas_limit, 100_000);
+        assert_eq!(tx.gas_fee_cap, uint!(1_000_000_000_U256));
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn send_contract_tx_produces_contract_tx_on_l2() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let Some(ctx) = TestContext::try_from_env().await else {
+            eprintln!("ARBITRUM_RPC/ETHEREUM_RPC not set — skipping");
+            return Ok(());
+        };
+
+        let since = ctx.arbitrum_provider.get_block_number().await?;
+        println!("[contract] scanning L2 from block {since}");
+
+        let dev_addr = dev_address();
+        println!("[contract] dev addr (L2 target): {dev_addr}");
+
+        println!("[contract] submitting sendContractTransaction on L1...");
+        let l1_receipt = ctx
+            .send_contract_transaction(ContractTxParams {
+                gas_limit: uint!(100_000_U256),
+                max_fee_per_gas: uint!(1_000_000_000_U256),
+                to: dev_addr,
+                data: Default::default(),
+            })
+            .await?;
+        assert!(
+            l1_receipt.status(),
+            "L1 sendContractTransaction tx reverted"
+        );
+        println!(
+            "[contract] L1 tx confirmed: {} (block {})",
+            l1_receipt.transaction_hash(),
+            l1_receipt.block_number().unwrap_or_default(),
+        );
+
+        println!("[contract] advancing L1 by 2 blocks...");
+        ctx.advance_l1_blocks(2).await?;
+
+        println!("[contract] waiting for TxContract (0x66) on L2...");
+        let l2_hash = ctx
+            .wait_for_l2_tx_type(0x66, since, std::time::Duration::from_secs(60))
+            .await?;
+        println!("[contract] found L2 TxContract: {l2_hash}");
+
+        let receipt = ctx
+            .arbitrum_provider
+            .get_transaction_receipt(l2_hash)
+            .await?;
+        assert!(
+            receipt.is_some(),
+            "missing L2 receipt for TxContract {l2_hash}"
+        );
+        println!(
+            "[contract] L2 receipt: block {}",
+            receipt.unwrap().block_number().unwrap_or_default(),
+        );
+
+        Ok(())
     }
 }

@@ -220,3 +220,65 @@ impl Sealable for ArbInternalTx {
         self.tx_hash()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_eips::Typed2718;
+    use alloy_network_primitives::{ReceiptResponse, TransactionResponse};
+    use alloy_provider::Provider;
+    use serial_test::serial;
+    use test_utils::TestContext;
+
+    use super::ArbInternalTx;
+
+    #[tokio::test]
+    #[serial]
+    async fn internal_tx_and_receipt_are_observable_on_l2() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let Some(ctx) = TestContext::try_from_env().await else {
+            eprintln!("ARBITRUM_RPC/ETHEREUM_RPC not set — skipping");
+            return Ok(());
+        };
+
+        let since = ctx.arbitrum_provider.get_block_number().await?;
+        println!("[internal] scanning L2 from block {since}");
+
+        // Force chain activity so we observe a fresh ArbOS internal tx.
+        ctx.advance_l1_blocks(1).await?;
+
+        let hash = ctx
+            .wait_for_l2_tx_type(0x6a, since, std::time::Duration::from_secs(60))
+            .await?;
+        println!("[internal] found tx: {hash}");
+
+        let tx = ctx
+            .arbitrum_provider
+            .get_transaction_by_hash(hash)
+            .await?
+            .ok_or_else(|| format!("missing tx for {hash}"))?;
+        assert_eq!(tx.inner.ty(), 0x6a, "expected internal tx type");
+        assert_eq!(
+            tx.from(),
+            ArbInternalTx::ARBOS_ADDRESS,
+            "expected ArbOS sender"
+        );
+
+        let receipt = ctx
+            .arbitrum_provider
+            .get_transaction_receipt(hash)
+            .await?
+            .ok_or_else(|| format!("missing receipt for {hash}"))?;
+        assert_eq!(
+            receipt.inner.inner.ty(),
+            0x6a,
+            "expected internal receipt type"
+        );
+        assert_eq!(receipt.transaction_hash(), hash);
+        println!(
+            "[internal] receipt: block {}",
+            receipt.block_number().unwrap_or_default()
+        );
+
+        Ok(())
+    }
+}

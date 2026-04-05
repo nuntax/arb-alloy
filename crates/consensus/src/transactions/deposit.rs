@@ -339,3 +339,66 @@ impl Sealable for TxDeposit {
         self.tx_hash()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_network_primitives::ReceiptResponse;
+    use alloy_primitives::U256;
+    use alloy_provider::Provider;
+    use serial_test::serial;
+    use test_utils::{DepositParams, TestContext};
+
+    const ONE_MILLI_ETH: U256 = U256::from_limbs([1_000_000_000_000_000u64, 0, 0, 0]);
+
+    #[tokio::test]
+    #[serial]
+    async fn deposit_eth_produces_deposit_tx_on_l2() -> Result<(), Box<dyn std::error::Error>> {
+        let Some(ctx) = TestContext::try_from_env().await else {
+            eprintln!("ARBITRUM_RPC/ETHEREUM_RPC not set — skipping");
+            return Ok(());
+        };
+
+        let since = ctx.arbitrum_provider.get_block_number().await?;
+        println!("[deposit] scanning L2 from block {since}");
+
+        println!("[deposit] submitting depositEth({ONE_MILLI_ETH} wei) on L1...");
+        let l1_receipt = ctx
+            .deposit_eth(DepositParams {
+                value: ONE_MILLI_ETH,
+            })
+            .await?;
+        assert!(l1_receipt.status(), "L1 depositEth tx reverted");
+        println!(
+            "[deposit] L1 tx confirmed: {} (block {})",
+            l1_receipt.transaction_hash(),
+            l1_receipt.block_number().unwrap_or_default(),
+        );
+
+        println!("[deposit] advancing L1 by 2 blocks to satisfy sequencer finalize-distance...");
+        ctx.advance_l1_blocks(2).await?;
+
+        println!("[deposit] waiting for TxDeposit (0x64) on L2...");
+        let l2_hash = ctx
+            .wait_for_l2_tx_type(0x64, since, std::time::Duration::from_secs(60))
+            .await?;
+        println!("[deposit] found L2 deposit tx: {l2_hash}");
+
+        let receipt = ctx
+            .arbitrum_provider
+            .get_transaction_receipt(l2_hash)
+            .await?;
+        assert!(
+            receipt.is_some(),
+            "missing L2 receipt for deposit tx {l2_hash}"
+        );
+        let receipt = receipt.unwrap();
+        assert!(receipt.status(), "L2 deposit tx did not succeed");
+        println!(
+            "[deposit] L2 receipt: block {}, status={}",
+            receipt.block_number().unwrap_or_default(),
+            receipt.status(),
+        );
+
+        Ok(())
+    }
+}

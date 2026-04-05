@@ -24,12 +24,13 @@ pub struct TxUnsigned {
     /// Sender address supplied by ArbOS.
     pub from: Address,
     /// Sender nonce.
+    #[serde(with = "alloy_serde::quantity")]
     pub nonce: u64,
     /// Maximum fee per gas.
-    #[serde(alias = "maxFeePerGas")]
+    #[serde(alias = "maxFeePerGas", alias = "gasPrice")]
     pub gas_fee_cap: U256,
     /// Gas limit for execution.
-    #[serde(alias = "gas")]
+    #[serde(alias = "gas", with = "alloy_serde::quantity")]
     pub gas_limit: u64,
     /// Call target (or create).
     pub to: TxKind,
@@ -232,5 +233,168 @@ impl Transaction for TxUnsigned {
 impl Sealable for TxUnsigned {
     fn hash_slow(&self) -> B256 {
         self.tx_hash()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloy_eips::Typed2718;
+    use alloy_network_primitives::{ReceiptResponse, TransactionResponse};
+    use alloy_primitives::{Address, B256, U256, address, uint};
+    use alloy_provider::Provider;
+    use alloy_rpc_types_eth::TransactionTrait;
+    use serial_test::serial;
+    use test_utils::{TestContext, UnsignedTxParams, dev_address};
+
+    use super::TxUnsigned;
+
+    const ADDRESS_ALIAS_OFFSET: U256 = uint!(0x1111000000000000000000000000000000001111_U256);
+
+    fn l1_to_l2_alias(addr: Address) -> Address {
+        let mut buf = [0u8; 32];
+        buf[12..].copy_from_slice(addr.as_slice());
+        let aliased = U256::from_be_bytes(buf).wrapping_add(ADDRESS_ALIAS_OFFSET);
+        let out = aliased.to_be_bytes::<32>();
+        Address::from_slice(&out[12..])
+    }
+
+    #[test]
+    fn deserialize_rpc_shape_supports_gas_price_alias() {
+        let raw = r#"{
+            "chainId":"0x64aba",
+            "from":"0x502fae7d46d88f08fc2f8ed27fcb2ab183eb3e1f",
+            "nonce":"0x8",
+            "gas":"0x186a0",
+            "gasPrice":"0x3b9aca00",
+            "to":"0x3f1eae7d46d88f08fc2f8ed27fcb2ab183eb2d0e",
+            "value":"0x5af3107a4000",
+            "input":"0x"
+        }"#;
+
+        let tx: TxUnsigned = serde_json::from_str(raw).expect("valid TxUnsigned RPC shape");
+
+        assert_eq!(tx.ty(), 0x65);
+        assert_eq!(
+            tx.from,
+            address!("0x502fae7d46d88f08fc2f8ed27fcb2ab183eb3e1f")
+        );
+        assert_eq!(tx.nonce, 8);
+        assert_eq!(tx.gas_limit, 100_000);
+        assert_eq!(tx.gas_fee_cap, uint!(1_000_000_000_U256));
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn send_unsigned_tx_produces_unsigned_tx_on_l2() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let Some(ctx) = TestContext::try_from_env().await else {
+            eprintln!("ARBITRUM_RPC/ETHEREUM_RPC not set — skipping");
+            return Ok(());
+        };
+
+        let since = ctx.arbitrum_provider.get_block_number().await?;
+        println!("[unsigned] scanning L2 from block {since}");
+
+        let l1_sender = dev_address();
+        let l2_sender = l1_to_l2_alias(l1_sender);
+        let l2_nonce = ctx
+            .arbitrum_provider
+            .get_transaction_count(l2_sender)
+            .await?;
+        println!(
+            "[unsigned] l1 sender: {l1_sender}, aliased l2 sender: {l2_sender}, L2 nonce: {l2_nonce}"
+        );
+
+        println!("[unsigned] submitting sendUnsignedTransaction on L1...");
+        let l1_receipt = ctx
+            .send_unsigned_transaction(UnsignedTxParams {
+                gas_limit: uint!(100_000_U256),
+                max_fee_per_gas: uint!(1_000_000_000_U256),
+                nonce: U256::from(l2_nonce),
+                to: l1_sender,
+                data: Default::default(),
+            })
+            .await?;
+        assert!(
+            l1_receipt.status(),
+            "L1 sendUnsignedTransaction tx reverted"
+        );
+        println!(
+            "[unsigned] L1 tx confirmed: {} (block {})",
+            l1_receipt.transaction_hash(),
+            l1_receipt.block_number().unwrap_or_default(),
+        );
+
+        println!("[unsigned] advancing L1 by 4 blocks...");
+        ctx.advance_l1_blocks(4).await?;
+
+        println!("[unsigned] waiting for unsigned submission on L2 (timeout=120s)...");
+        let l2_hash = {
+            let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(120);
+            let mut scan_from = since;
+            let mut found = None;
+            while found.is_none() {
+                if tokio::time::Instant::now() >= deadline {
+                    break;
+                }
+                let latest = ctx.arbitrum_provider.get_block_number().await?;
+                for bn in scan_from..=latest {
+                    let block = ctx
+                        .arbitrum_provider
+                        .get_block(alloy_eips::BlockId::Number(
+                            alloy_rpc_types_eth::BlockNumberOrTag::Number(bn),
+                        ))
+                        .await?;
+                    let Some(block) = block else { continue };
+                    for hash in block.transactions.hashes() {
+                        let hash = B256::new(*hash);
+                        match ctx.arbitrum_provider.get_transaction_by_hash(hash).await {
+                            Ok(Some(tx)) => {
+                                let ty = tx.inner.ty();
+                                let from = tx.from();
+                                let nonce = tx.nonce();
+                                let is_expected_unsigned =
+                                    from == l2_sender && nonce == l2_nonce && ty == 0x65;
+                                if is_expected_unsigned {
+                                    println!(
+                                        "[unsigned] block {bn} tx {hash} type=0x{ty:02x} from={from} nonce={nonce}"
+                                    );
+                                    found = Some(hash);
+                                }
+                            }
+                            Ok(None) => {}
+                            Err(e) => println!("[unsigned] block {bn} tx {hash} → error: {e}"),
+                        }
+                    }
+                    scan_from = bn + 1;
+                }
+                tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+            }
+            found
+        };
+        let Some(l2_hash) = l2_hash else {
+            return Err(
+                format!(
+                    "timeout waiting for unsigned tx from aliased sender {l2_sender} nonce {l2_nonce} since block {since}"
+                )
+                .into(),
+            );
+        };
+        println!("[unsigned] found L2 unsigned tx: {l2_hash}");
+
+        let receipt = ctx
+            .arbitrum_provider
+            .get_transaction_receipt(l2_hash)
+            .await?;
+        assert!(
+            receipt.is_some(),
+            "missing L2 receipt for unsigned tx {l2_hash}"
+        );
+        println!(
+            "[unsigned] L2 receipt: block {}",
+            receipt.unwrap().block_number().unwrap_or_default(),
+        );
+
+        Ok(())
     }
 }

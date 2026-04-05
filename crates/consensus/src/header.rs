@@ -2,7 +2,7 @@ use alloy_consensus::Header;
 use alloy_primitives::{B256, Bytes};
 use core::fmt;
 
-// Nitro reference 
+// Nitro reference
 // - core/types/arb_types.go:
 //   - HeaderInfo.extra() writes SendRoot into Header.Extra (32 bytes)
 //   - HeaderInfo.mixDigest() writes SendCount/L1BlockNumber/ArbOSFormatVersion into MixDigest[0..24]

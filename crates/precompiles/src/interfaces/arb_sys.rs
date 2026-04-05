@@ -77,3 +77,50 @@ alloy_core::sol! {
         );
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use alloy_primitives::address;
+    use alloy_provider::{Provider, ProviderBuilder};
+    use arb_alloy_network::Arbitrum;
+
+    use crate::addresses::ARB_SYS;
+    use crate::interfaces::ArbSys;
+
+    #[tokio::test]
+    async fn arb_sys_live_view_calls() -> Result<(), Box<dyn std::error::Error>> {
+        let rpc = match std::env::var("ARBITRUM_RPC") {
+            Ok(v) if !v.trim().is_empty() => v,
+            _ => {
+                eprintln!("ARBITRUM_RPC not set — skipping");
+                return Ok(());
+            }
+        };
+
+        let provider = ProviderBuilder::<_, _, Arbitrum>::default()
+            .connect(&rpc)
+            .await?;
+
+        let arb_sys = ArbSys::new(ARB_SYS, &provider);
+
+        let chain_id = arb_sys.arbChainID().call().await?;
+        assert_eq!(chain_id, provider.get_chain_id().await?);
+
+        let block_num = arb_sys.arbBlockNumber().call().await?;
+        assert!(block_num > 0);
+
+        let mapped = arb_sys
+            .mapL1SenderContractAddressToL2Alias(
+                address!("0x1000000000000000000000000000000000000000"),
+                address!("0x0000000000000000000000000000000000000000"),
+            )
+            .call()
+            .await?;
+        assert_ne!(
+            mapped,
+            address!("0x0000000000000000000000000000000000000000")
+        );
+
+        Ok(())
+    }
+}
