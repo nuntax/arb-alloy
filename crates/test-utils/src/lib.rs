@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+#![allow(clippy::too_many_arguments)]
 
 use std::{env, time::Duration};
 
@@ -212,7 +213,7 @@ impl TestContext<RootProvider<Arbitrum>, RootProvider<Ethereum>> {
 
 impl<AP: Provider<Arbitrum>, EP: Provider<Ethereum>> TestContext<AP, EP> {
     /// Returns an [`Inbox`] instance bound to the L1 provider.
-    pub fn inbox(&self) -> Inbox::InboxInstance<&EP, Ethereum> {
+    pub const fn inbox(&self) -> Inbox::InboxInstance<&EP, Ethereum> {
         Inbox::new(self.addresses.inbox, &self.ethereum_provider)
     }
 
@@ -289,24 +290,29 @@ impl<AP: Provider<Arbitrum>, EP: Provider<Ethereum>> TestContext<AP, EP> {
 
             let latest = self.arbitrum_provider.get_block_number().await?;
 
-            for bn in scan_from..=latest {
+            let mut bn = scan_from;
+            while bn <= latest {
                 let block = self
                     .arbitrum_provider
                     .get_block(BlockId::Number(BlockNumberOrTag::Number(bn)))
                     .await?;
-                let Some(block) = block else { continue };
+                let Some(block) = block else {
+                    bn = bn.saturating_add(1);
+                    continue;
+                };
 
                 for hash in block.transactions.hashes() {
                     let hash = B256::new(*hash);
                     let tx = self.arbitrum_provider.get_transaction_by_hash(hash).await?;
-                    if let Some(tx) = tx {
-                        if tx.inner.ty() == ty {
-                            return Ok(hash);
-                        }
+                    if let Some(tx) = tx
+                        && tx.inner.ty() == ty
+                    {
+                        return Ok(hash);
                     }
                 }
-                scan_from = bn + 1;
+                bn = bn.saturating_add(1);
             }
+            scan_from = latest.saturating_add(1);
 
             tokio::time::sleep(Duration::from_millis(500)).await;
         }

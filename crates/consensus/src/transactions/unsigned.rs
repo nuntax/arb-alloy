@@ -338,14 +338,18 @@ mod tests {
                     break;
                 }
                 let latest = ctx.arbitrum_provider.get_block_number().await?;
-                for bn in scan_from..=latest {
+                let mut bn = scan_from;
+                while bn <= latest {
                     let block = ctx
                         .arbitrum_provider
                         .get_block(alloy_eips::BlockId::Number(
                             alloy_rpc_types_eth::BlockNumberOrTag::Number(bn),
                         ))
                         .await?;
-                    let Some(block) = block else { continue };
+                    let Some(block) = block else {
+                        bn = bn.saturating_add(1);
+                        continue;
+                    };
                     for hash in block.transactions.hashes() {
                         let hash = B256::new(*hash);
                         match ctx.arbitrum_provider.get_transaction_by_hash(hash).await {
@@ -366,8 +370,9 @@ mod tests {
                             Err(e) => println!("[unsigned] block {bn} tx {hash} → error: {e}"),
                         }
                     }
-                    scan_from = bn + 1;
+                    bn = bn.saturating_add(1);
                 }
+                scan_from = latest.saturating_add(1);
                 tokio::time::sleep(std::time::Duration::from_millis(500)).await;
             }
             found
