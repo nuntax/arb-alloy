@@ -9,10 +9,6 @@ This project is under active development and not yet stable. API and feature cov
 
 ## Quick Start
 
-```bash
-cargo add arb-alloy
-```
-
 ```rust
 use alloy_provider::{Provider, ProviderBuilder};
 use arb_alloy::{network::Arbitrum, provider::ArbProviderExt};
