@@ -26,8 +26,8 @@ bytes.workspace = true
 serde.workspace = true
 alloy-core.workspace = true
 alloy-contract.workspace = true
-reth-primitives-traits = { version = "0.5.0", default-features = false, optional = true }
-reth-codecs = { version = "0.5.0", default-features = false, optional = true }
+reth-primitives-traits = { version = "0.6.0", default-features = false, optional = true }
+reth-codecs = { version = "0.6.0", default-features = false, optional = true }
 
 [dev-dependencies]
 alloy-network-primitives.workspace = true
