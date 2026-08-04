@@ -24,8 +24,8 @@ alloy_core::sol! {
         function redeem(bytes32 ticketId) external returns (bytes32);
 
         /// Extends the timeout of a retryable ticket by one lifetime period.
-        /// Returns the new timeout timestamp.
-        function keepalive(bytes32 ticketId) external payable returns (uint256);
+        /// Returns the new timeout timestamp. Nitro declares this method non-payable.
+        function keepalive(bytes32 ticketId) external returns (uint256);
 
         /// Cancels a retryable ticket and refunds remaining value to the beneficiary.
         function cancel(bytes32 ticketId) external;
